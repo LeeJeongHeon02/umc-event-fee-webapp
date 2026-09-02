@@ -8,10 +8,20 @@
 
 ```text
 contracts/openapi.yaml  API 계약
+docs/                   기획·ERD·API·개발 계획과 테스트 보고서
 frontend/               React + TypeScript + Vite
 backend/                Spring Boot + JPA + Flyway
 compose.yaml            로컬 PostgreSQL
 ```
+
+## 프로젝트 문서
+
+- [서비스 기획서](./docs/product-plan.md)
+- [ERD 설계서](./docs/erd.md)
+- [API 명세서](./docs/api-spec.md)
+- [개발 계획서](./docs/development-plan.md)
+- [통합 테스트 보고서](./docs/integration-test-report.md)
+- [OpenAPI 계약](./contracts/openapi.yaml)
 
 ## 구현된 화면과 흐름
 
@@ -47,6 +57,13 @@ npm run dev
 VITE_ENABLE_MOCKS=false npm run dev
 ```
 
+Windows PowerShell에서는 다음처럼 실행합니다.
+
+```powershell
+$env:VITE_ENABLE_MOCKS="false"
+npm run dev
+```
+
 Vite가 `/api` 요청을 `http://localhost:8080`으로 프록시합니다.
 
 회원 화면 상단의 `운영진` 버튼으로 운영진 화면에 진입할 수 있습니다. 개발용 로그인 사용자는 `STAFF` 권한으로 설정되어 있습니다.
@@ -67,7 +84,7 @@ npm test
 npm run build
 ```
 
-현재 기준으로 타입 검사, 핵심 흐름 테스트 6건, 프로덕션 빌드가 모두 통과합니다. 운영진 테스트에는 행사 참가비 및 회비 송금 신고 승인이 포함됩니다.
+현재 기준으로 타입 검사와 핵심 흐름 테스트 6건은 통과합니다. 실제 API 연동으로 행사 참가, 송금 신고, 운영진 승인, 참가 취소와 환불 대기 전환까지 검증했습니다. 프로덕션 번들링은 모듈 변환 후 종료 코드 `1`을 반환하므로 통합 안정화 단계에서 해결해야 합니다. 상세 내용은 [통합 테스트 보고서](./docs/integration-test-report.md)를 참고합니다.
 
 ## 백엔드 실행
 
@@ -116,9 +133,10 @@ cd backend
 
 ## 다음 개발 순서
 
-1. 카카오 OAuth와 실제 세션 기반 `CurrentMemberProvider` 구현
-2. 운영진 행사 생성·수정·게시 API 및 화면 추가
-3. 회비 차수 생성과 대상자 부과 API 구현
-4. 환불 완료 처리와 감사 이력 조회 API 구현
-5. PostgreSQL Testcontainers 통합 테스트 추가
-6. 프론트엔드 인수 테스트를 실제 API E2E로 확장
+1. 통합 안정화: 프로덕션 빌드 오류와 회원정보 하드코딩 해결
+2. 행사 참가 취소 프론트 UI 연결과 실제 API E2E 추가
+3. PostgreSQL Testcontainers와 CI 검증 추가
+4. 카카오 OAuth와 실제 세션 기반 `CurrentMemberProvider` 구현
+5. 운영진 행사 생성·수정·게시 API 및 화면 추가
+6. 회비 차수 생성과 대상자 부과 API 구현
+7. 환불 완료 처리와 감사 이력 조회 API 구현
