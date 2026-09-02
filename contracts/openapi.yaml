@@ -13,6 +13,18 @@ tags:
   - name: Payments
   - name: Admin
 paths:
+  /auth/csrf:
+    get:
+      tags: [Auth]
+      operationId: getCsrfToken
+      summary: 상태 변경 요청용 CSRF 토큰 발급
+      responses:
+        '200':
+          description: CSRF 토큰
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CsrfResponse'
   /me:
     get:
       tags: [Me]
@@ -217,6 +229,120 @@ paths:
                 $ref: '#/components/schemas/AdminDashboardResponse'
         '403':
           $ref: '#/components/responses/Forbidden'
+  /admin/events:
+    get:
+      tags: [Admin]
+      operationId: getAdminEvents
+      summary: 운영진 행사 전체 목록 조회
+      responses:
+        '200':
+          description: 행사 목록
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AdminEventResponse'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      tags: [Admin]
+      operationId: createAdminEvent
+      summary: 행사 초안 생성
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminEventCreateRequest'
+      responses:
+        '201':
+          description: 생성된 행사 초안
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminEventResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /admin/events/{eventId}:
+    get:
+      tags: [Admin]
+      operationId: getAdminEvent
+      summary: 운영진 행사 상세 조회
+      parameters:
+        - $ref: '#/components/parameters/EventId'
+      responses:
+        '200':
+          description: 행사 상세
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminEventResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags: [Admin]
+      operationId: updateAdminEvent
+      summary: 행사 초안 수정
+      parameters:
+        - $ref: '#/components/parameters/EventId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminEventUpdateRequest'
+      responses:
+        '200':
+          description: 수정된 행사
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminEventResponse'
+        '409':
+          $ref: '#/components/responses/Conflict'
+    delete:
+      tags: [Admin]
+      operationId: deleteAdminEvent
+      summary: 참가 이력이 없는 행사 초안 삭제
+      parameters:
+        - $ref: '#/components/parameters/EventId'
+        - name: version
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int64
+            minimum: 0
+      responses:
+        '204':
+          description: 삭제 완료
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /admin/events/{eventId}/publish:
+    post:
+      tags: [Admin]
+      operationId: publishAdminEvent
+      summary: 행사 초안 공개
+      parameters:
+        - $ref: '#/components/parameters/EventId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminEventVersionRequest'
+      responses:
+        '200':
+          description: 공개된 행사
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminEventResponse'
+        '409':
+          $ref: '#/components/responses/Conflict'
   /admin/events/{eventId}/participants:
     get:
       tags: [Admin]
@@ -391,6 +517,16 @@ components:
           schema:
             $ref: '#/components/schemas/Problem'
   schemas:
+    CsrfResponse:
+      type: object
+      required: [headerName, parameterName, token]
+      properties:
+        headerName:
+          type: string
+        parameterName:
+          type: string
+        token:
+          type: string
     MemberPart:
       type: string
       enum: [PLAN, DESIGN, PE_WEB, PE_MOBILE]
@@ -709,6 +845,102 @@ components:
           $ref: '#/components/schemas/PaymentReport'
         paymentStatus:
           $ref: '#/components/schemas/PaymentStatus'
+        version:
+          type: integer
+          format: int64
+    AdminEventCreateRequest:
+      type: object
+      required: [title, description, startsAt, registrationDeadline, feeAmount, allowLateCancellation]
+      properties:
+        title:
+          type: string
+          maxLength: 200
+        summary:
+          type: string
+          maxLength: 500
+        description:
+          type: string
+        location:
+          type: string
+          maxLength: 200
+        startsAt:
+          type: string
+          format: date-time
+        endsAt:
+          type: string
+          format: date-time
+        registrationDeadline:
+          type: string
+          format: date-time
+        capacity:
+          type: integer
+          minimum: 1
+        feeAmount:
+          type: integer
+          format: int64
+          minimum: 0
+        allowLateCancellation:
+          type: boolean
+    AdminEventUpdateRequest:
+      allOf:
+        - $ref: '#/components/schemas/AdminEventCreateRequest'
+        - type: object
+          required: [version]
+          properties:
+            version:
+              type: integer
+              format: int64
+              minimum: 0
+    AdminEventVersionRequest:
+      type: object
+      required: [version]
+      properties:
+        version:
+          type: integer
+          format: int64
+          minimum: 0
+    AdminEventResponse:
+      type: object
+      required: [id, title, description, startsAt, registrationDeadline, joinedCount, feeAmount, status, allowLateCancellation, createdAt, updatedAt, version]
+      properties:
+        id:
+          type: integer
+          format: int64
+        title:
+          type: string
+        summary:
+          type: string
+        description:
+          type: string
+        location:
+          type: string
+        startsAt:
+          type: string
+          format: date-time
+        endsAt:
+          type: string
+          format: date-time
+        registrationDeadline:
+          type: string
+          format: date-time
+        capacity:
+          type: integer
+        joinedCount:
+          type: integer
+          format: int64
+        feeAmount:
+          type: integer
+          format: int64
+        status:
+          $ref: '#/components/schemas/EventStatus'
+        allowLateCancellation:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
         version:
           type: integer
           format: int64

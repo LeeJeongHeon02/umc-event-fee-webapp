@@ -4,6 +4,7 @@ import { AdminShell } from './AdminShell'
 import { AdminDashboardPage } from '../pages/AdminDashboardPage'
 import { AdminEventParticipantsPage } from '../pages/AdminEventParticipantsPage'
 import { AdminFeePaymentsPage } from '../pages/AdminFeePaymentsPage'
+import { AdminEventsPage } from '../pages/AdminEventsPage'
 import { EventDetailPage } from '../pages/EventDetailPage'
 import { HomePage } from '../pages/HomePage'
 import { LoginPage } from '../pages/LoginPage'
@@ -24,6 +25,7 @@ export function App() {
       </Route>
       <Route path="/admin" element={<AdminShell />}>
         <Route index element={<AdminDashboardPage />} />
+        <Route path="events" element={<AdminEventsPage />} />
         <Route path="events/:eventId/participants" element={<AdminEventParticipantsPage />} />
         <Route path="fees/:duesRoundId/payments" element={<AdminFeePaymentsPage />} />
       </Route>

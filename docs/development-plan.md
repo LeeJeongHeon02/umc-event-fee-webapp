@@ -1,6 +1,6 @@
 # 교내 개발 동아리 행사·회비 관리 웹앱 개발 계획
 
-> 문서 상태: v0.4  
+> 문서 상태: v0.5
 > 개발 전략: Frontend First + Spec-Driven Development + Test-Driven Development  
 > 연관 문서: [서비스 기획서](./product-plan.md) · [ERD 설계서](./erd.md) · [API 명세서](./api-spec.md) · [통합 테스트 보고서](./integration-test-report.md)
 
@@ -14,19 +14,25 @@
 6. 카카오 로그인, 계좌번호, 운영진 권한은 기능 구현 초기부터 보안 경계로 취급한다.
 7. 각 단계는 실행 가능한 빌드와 자동화된 테스트를 남긴 상태로 종료한다.
 
-## 현재 우선 작업: 통합 안정화
+## 현재 우선 작업: 통합 안정화 완료
 
 2026-09-02 실제 API 연동 테스트 결과를 기준으로 신규 기능 확장보다 현재 세로 기능을 배포 가능한 기준점으로 만드는 작업을 먼저 수행한다.
 
 권장 작업 브랜치: `feature/integration-hardening`
 
-개발 순서:
+완료된 개발 순서:
 
 1. Vite/Rollup 프로덕션 번들링 종료 코드 `1` 문제 해결
 2. 상단 아바타와 송금자명의 `홍길동` 하드코딩 제거 및 `/me` 응답 연결
 3. 행사 참가 취소 API를 프론트 행사 상세 화면에 연결
 4. 실제 Spring API 기반 핵심 Playwright E2E 추가
 5. PostgreSQL Testcontainers와 CI 검증 추가
+
+추가 완료 범위:
+
+- 백엔드를 `도메인 → presentation/application/domain/infrastructure` 구조로 재구성
+- 카카오 OAuth 최초 회원 생성, 재로그인 조회, 세션 기반 현재 회원 확인
+- 운영진 행사 초안 생성·조회·수정·삭제·공개 API와 화면
 
 완료 기준:
 
@@ -56,7 +62,13 @@ club-event-fee-webapp/
 │  │  └─ test/
 │  └─ package.json
 ├─ backend/
-│  ├─ src/main/java/
+│  ├─ src/main/java/com/dclub/api/
+│  │  ├─ member/{presentation,application,domain,infrastructure}/
+│  │  ├─ event/{presentation,application,domain,infrastructure}/
+│  │  ├─ payment/{presentation,application,domain,infrastructure}/
+│  │  ├─ dues/{domain,infrastructure}/
+│  │  ├─ admin/{presentation,application}/
+│  │  └─ global/{presentation,application,common,config,security}/
 │  ├─ src/main/resources/
 │  └─ src/test/java/
 ├─ docs/
@@ -163,7 +175,7 @@ club-event-fee-webapp/
 - 회원 승인·정지·역할 변경
 - 송금정보 버전 관리
 
-현재 구현 완료 범위(2026-09-01):
+현재 구현 완료 범위(2026-09-02):
 
 - 운영진 대시보드 및 전체 수납률 요약
 - 행사별 참가 부원·참가비 납부 목록
@@ -171,10 +183,11 @@ club-event-fee-webapp/
 - 이름·파트·납부 상태 검색 및 필터
 - `REPORTED → CONFIRMED/REJECTED` 승인·반려 목 흐름
 - 운영진 화면의 데스크톱 사이드바와 모바일 하단 내비게이션
+- 행사 초안 생성·수정·삭제·공개 화면과 MSW 테스트
 
 후속 범위:
 
-- 행사 생성·수정·게시·마감·취소
+- 행사 마감·취소
 - 회비 차수 생성과 부과 대상 미리보기
 - 회원 승인·역할 관리
 - 환불 및 송금정보 버전 관리
@@ -191,7 +204,7 @@ club-event-fee-webapp/
 - 서버 세션과 CSRF
 - 회원 온보딩·승인·권한 검사
 
-현재 구현 완료 범위(2026-09-01):
+현재 구현 완료 범위(2026-09-02):
 
 - Spring Boot 3.5.16 + Gradle Wrapper 기반 프로젝트
 - H2 개발 환경과 PostgreSQL Docker Compose 환경
@@ -199,16 +212,18 @@ club-event-fee-webapp/
 - 회원·행사·참가·회비·납부·송금 신고 엔티티
 - 공통 Problem Details 오류 응답
 - 개발용 고정 운영진 인증 경계
-- 도메인 단위 테스트 12건, 인증 단위 테스트 3건, 컨텍스트 테스트 1건, API 통합 테스트 7건
+- 카카오 OAuth 최초 회원 생성·재로그인 조회와 세션 기반 현재 회원 확인
+- 운영 프로필의 OAuth 로그인 성공 후 온보딩·승인·홈 분기
+- PostgreSQL 16 Testcontainers 기반 Flyway·유일 제약 테스트
+- PostgreSQL 16 Testcontainers를 포함한 백엔드 자동화 테스트 28건 통과
 - 개발용 회원 전환 헤더와 일반 회원의 운영진 API 접근 차단 검증
 
 환경 제약으로 로컬 빌드는 Java 17을 사용한다. Spring Boot 3.5가 Java 17 이상을 지원하므로 현재 개발에는 문제가 없으며, 배포 환경 확정 시 Java 21 툴체인으로 상향한다.
 
 후속 범위:
 
-- 카카오 OAuth 로그인 성공 시 회원 생성·조회
-- 서버 세션과 CSRF 보호
-- 실제 인증 주체 기반 `CurrentMemberProvider`
+- 카카오 개발자 테스트 앱으로 실제 Authorization Code 왕복 검증
+- 프론트엔드의 CSRF 쿠키 헤더 전송
 - 미승인 회원 접근 보안 테스트
 
 TDD 우선 대상:
@@ -230,7 +245,7 @@ TDD 우선 대상:
 5. MockMvc 계약 테스트
 6. 프론트 Mock을 실제 API로 교체
 
-현재 행사 목록·상세·참가 신청과 유료·무료 납부 항목 생성, 참가 취소까지 구현했다. 취소 시 미납·확인 대기 납부는 `VOID`, 납부 완료는 `REFUND_PENDING`으로 전환하며 상태 이력을 남긴다.
+현재 행사 목록·상세·참가 신청과 유료·무료 납부 항목 생성, 참가 취소, 운영진 행사 CRUD·공개까지 구현했다. 취소 시 미납·확인 대기 납부는 `VOID`, 납부 완료는 `REFUND_PENDING`으로 전환하며 상태 이력을 남긴다.
 
 TDD 우선 대상:
 

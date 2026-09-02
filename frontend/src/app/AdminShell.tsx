@@ -1,12 +1,17 @@
 import { NavLink, Outlet } from 'react-router-dom'
+import { useCurrentMember } from '../hooks/useCurrentMember'
 
 const adminNavItems = [
   { to: '/admin', label: '대시보드', symbol: '▦', end: true },
+  { to: '/admin/events', label: '행사 관리', symbol: '+' },
   { to: '/admin/events/42/participants', label: '행사 참가자', symbol: '◎' },
   { to: '/admin/fees/7/payments', label: '회비 납부', symbol: '₩' },
 ]
 
 export function AdminShell() {
+  const meQuery = useCurrentMember()
+  const memberName = meQuery.data?.name ?? meQuery.data?.kakaoProfileName ?? '운영진'
+
   return (
     <div className="admin-shell">
       <aside className="admin-sidebar">
@@ -27,11 +32,14 @@ export function AdminShell() {
       <div className="admin-workspace">
         <header className="admin-topbar">
           <div><span className="admin-mobile-brand">D: Admin</span></div>
-          <div className="admin-profile"><span>STAFF</span><strong>김총무</strong><div>김</div></div>
+          <div className="admin-profile">
+            <span>{meQuery.data?.role ?? 'STAFF'}</span>
+            <strong>{memberName}</strong>
+            <div>{memberName.slice(0, 1)}</div>
+          </div>
         </header>
         <main className="admin-main"><Outlet /></main>
       </div>
     </div>
   )
 }
-

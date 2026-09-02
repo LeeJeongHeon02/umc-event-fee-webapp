@@ -4,11 +4,11 @@ export function LoginPage() {
   const navigate = useNavigate()
 
   function startKakaoLogin() {
-    if (import.meta.env.DEV) {
+    if (import.meta.env.DEV && import.meta.env.VITE_ENABLE_MOCKS !== 'false') {
       navigate('/onboarding')
       return
     }
-    window.location.assign('/oauth2/authorization/kakao')
+    window.location.assign('/api/v1/oauth2/authorization/kakao')
   }
 
   return (
@@ -39,4 +39,3 @@ export function LoginPage() {
     </main>
   )
 }
-

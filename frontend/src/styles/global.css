@@ -924,6 +924,47 @@ p {
   backdrop-filter: blur(14px);
 }
 
+.event-actions,
+.cancellation-confirm {
+  display: grid;
+  gap: 10px;
+}
+
+.text-button {
+  border: 0;
+  color: var(--muted);
+  background: transparent;
+  text-decoration: underline;
+}
+
+.danger-button {
+  color: #fff;
+  background: #a53c32;
+}
+
+.cancellation-confirm p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.cancellation-confirm > div {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.cancellation-card {
+  margin-top: 24px;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+}
+
+.cancellation-card h2 { margin: 0; font-size: 18px; }
+.cancellation-card p { margin: 8px 0 0; color: var(--muted); line-height: 1.6; }
+
 .payment-heading {
   border-bottom: 1px solid var(--line);
 }
@@ -1508,6 +1549,27 @@ p {
 .admin-empty { padding: 40px; color: var(--muted); font-size: 12px; text-align: center; }
 .admin-list-footnote { margin: 0; padding: 12px 20px; color: #92918c; border-top: 1px solid var(--line); background: #faf9f6; font-size: 9px; }
 
+.event-management-layout { display: grid; grid-template-columns: minmax(250px, 0.75fr) minmax(420px, 1.5fr); gap: 18px; align-items: start; }
+.event-admin-list { overflow: hidden; }
+.event-admin-list > button { display: grid; width: 100%; gap: 7px; padding: 18px; border: 0; border-bottom: 1px solid var(--line); color: var(--ink); background: transparent; text-align: left; cursor: pointer; }
+.event-admin-list > button:hover,
+.event-admin-list > button.is-selected { background: #f3f8dc; }
+.event-admin-list > button > span { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.event-admin-list > button strong { font-size: 14px; }
+.event-admin-list > button small { color: var(--muted); font-size: 9px; }
+.event-admin-form { display: grid; gap: 16px; padding: 24px; }
+.event-admin-form label { display: grid; gap: 7px; color: var(--muted); font-size: 10px; font-weight: 750; }
+.event-admin-form input:not([type='checkbox']),
+.event-admin-form textarea { width: 100%; padding: 12px 13px; border: 1px solid var(--line); border-radius: 9px; color: var(--ink); background: white; font: inherit; }
+.event-admin-form input:disabled,
+.event-admin-form textarea:disabled { color: var(--muted); background: #f4f3ef; }
+.event-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.event-admin-form .event-checkbox { display: flex; align-items: center; grid-auto-flow: column; justify-content: start; }
+.event-form-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.danger-text-button { min-height: 42px; padding: 0 14px; border: 0; color: var(--danger); background: transparent; font-weight: 750; cursor: pointer; }
+.form-success { margin: 0; color: #416321; font-size: 11px; }
+.form-error { margin: 0; color: var(--danger); font-size: 11px; }
+
 @media (min-width: 720px) {
   .topbar { padding-right: 30px; padding-left: 30px; }
   .page { padding: 36px 30px 70px; }
@@ -1522,6 +1584,7 @@ p {
 @media (max-width: 1100px) {
   .admin-metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .admin-grid-section { grid-template-columns: 1fr; }
+  .event-management-layout { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 900px) {
@@ -1529,7 +1592,7 @@ p {
   .admin-sidebar { position: fixed; z-index: 40; top: auto; right: 10px; bottom: 10px; left: 10px; width: auto; height: auto; padding: 7px; border-radius: 20px; box-shadow: 0 12px 32px rgba(23, 23, 23, 0.25); }
   .admin-brand,
   .member-mode-link { display: none; }
-  .admin-nav { grid-template-columns: repeat(3, 1fr); }
+  .admin-nav { grid-template-columns: repeat(4, 1fr); }
   .admin-nav a { min-height: 50px; justify-content: center; padding: 0 10px; font-size: 10px; }
   .admin-nav a span { width: auto; }
   .admin-workspace { padding-bottom: 76px; }
@@ -1560,6 +1623,7 @@ p {
   .admin-filters label:first-child { min-width: 0; flex: 1; }
   .admin-filters .text-input { width: 100%; }
   .admin-filters .select-input { width: 125px; }
+  .event-form-grid { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 380px) {

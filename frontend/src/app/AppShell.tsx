@@ -1,6 +1,5 @@
-import { useQuery } from '@tanstack/react-query'
 import { NavLink, Outlet } from 'react-router-dom'
-import { getMe } from '../services/api'
+import { useCurrentMember } from '../hooks/useCurrentMember'
 
 const navItems = [
   { to: '/home', label: '홈', symbol: '⌂' },
@@ -9,8 +8,10 @@ const navItems = [
 ]
 
 export function AppShell() {
-  const meQuery = useQuery({ queryKey: ['me'], queryFn: getMe })
+  const meQuery = useCurrentMember()
   const canManage = meQuery.data?.role === 'STAFF' || meQuery.data?.role === 'ADMIN'
+  const memberName = meQuery.data?.name ?? meQuery.data?.kakaoProfileName ?? '회원'
+  const memberLabel = meQuery.data?.displayNickname ?? memberName
 
   return (
     <div className="app-shell">
@@ -25,7 +26,7 @@ export function AppShell() {
             <span aria-hidden="true">●</span>
             <span className="notification-dot" />
           </button>
-          <div className="avatar" aria-label="PE Web 홍길동">홍</div>
+          <div className="avatar" aria-label={memberLabel}>{memberName.slice(0, 1)}</div>
         </div>
       </header>
 

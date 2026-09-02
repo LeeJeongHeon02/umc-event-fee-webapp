@@ -4,6 +4,23 @@
  */
 
 export interface paths {
+    "/auth/csrf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 상태 변경 요청용 CSRF 토큰 발급 */
+        get: operations["getCsrfToken"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/me": {
         parameters: {
             query?: never;
@@ -191,6 +208,60 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 운영진 행사 전체 목록 조회 */
+        get: operations["getAdminEvents"];
+        put?: never;
+        /** 행사 초안 생성 */
+        post: operations["createAdminEvent"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/events/{eventId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 운영진 행사 상세 조회 */
+        get: operations["getAdminEvent"];
+        put?: never;
+        post?: never;
+        /** 참가 이력이 없는 행사 초안 삭제 */
+        delete: operations["deleteAdminEvent"];
+        options?: never;
+        head?: never;
+        /** 행사 초안 수정 */
+        patch: operations["updateAdminEvent"];
+        trace?: never;
+    };
+    "/admin/events/{eventId}/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** 행사 초안 공개 */
+        post: operations["publishAdminEvent"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/events/{eventId}/participants": {
         parameters: {
             query?: never;
@@ -263,6 +334,11 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        CsrfResponse: {
+            headerName: string;
+            parameterName: string;
+            token: string;
+        };
         /** @enum {string} */
         MemberPart: "PLAN" | "DESIGN" | "PE_WEB" | "PE_MOBILE";
         /** @enum {string} */
@@ -431,6 +507,57 @@ export interface components {
         PaymentReportResponse: {
             report: components["schemas"]["PaymentReport"];
             paymentStatus: components["schemas"]["PaymentStatus"];
+            /** Format: int64 */
+            version: number;
+        };
+        AdminEventCreateRequest: {
+            title: string;
+            summary?: string;
+            description: string;
+            location?: string;
+            /** Format: date-time */
+            startsAt: string;
+            /** Format: date-time */
+            endsAt?: string;
+            /** Format: date-time */
+            registrationDeadline: string;
+            capacity?: number;
+            /** Format: int64 */
+            feeAmount: number;
+            allowLateCancellation: boolean;
+        };
+        AdminEventUpdateRequest: components["schemas"]["AdminEventCreateRequest"] & {
+            /** Format: int64 */
+            version: number;
+        };
+        AdminEventVersionRequest: {
+            /** Format: int64 */
+            version: number;
+        };
+        AdminEventResponse: {
+            /** Format: int64 */
+            id: number;
+            title: string;
+            summary?: string;
+            description: string;
+            location?: string;
+            /** Format: date-time */
+            startsAt: string;
+            /** Format: date-time */
+            endsAt?: string;
+            /** Format: date-time */
+            registrationDeadline: string;
+            capacity?: number;
+            /** Format: int64 */
+            joinedCount: number;
+            /** Format: int64 */
+            feeAmount: number;
+            status: components["schemas"]["EventStatus"];
+            allowLateCancellation: boolean;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
             /** Format: int64 */
             version: number;
         };
@@ -620,6 +747,26 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    getCsrfToken: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description CSRF 토큰 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CsrfResponse"];
+                };
+            };
+        };
+    };
     getMe: {
         parameters: {
             query?: never;
@@ -883,6 +1030,153 @@ export interface operations {
                 };
             };
             403: components["responses"]["Forbidden"];
+        };
+    };
+    getAdminEvents: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 행사 목록 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminEventResponse"][];
+                };
+            };
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    createAdminEvent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminEventCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description 생성된 행사 초안 */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminEventResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    getAdminEvent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: components["parameters"]["EventId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 행사 상세 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminEventResponse"];
+                };
+            };
+            404: components["responses"]["NotFound"];
+        };
+    };
+    deleteAdminEvent: {
+        parameters: {
+            query: {
+                version: number;
+            };
+            header?: never;
+            path: {
+                eventId: components["parameters"]["EventId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 삭제 완료 */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            409: components["responses"]["Conflict"];
+        };
+    };
+    updateAdminEvent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: components["parameters"]["EventId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminEventUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description 수정된 행사 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminEventResponse"];
+                };
+            };
+            409: components["responses"]["Conflict"];
+        };
+    };
+    publishAdminEvent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: components["parameters"]["EventId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminEventVersionRequest"];
+            };
+        };
+        responses: {
+            /** @description 공개된 행사 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminEventResponse"];
+                };
+            };
+            409: components["responses"]["Conflict"];
         };
     };
     getAdminEventParticipants: {

@@ -1,9 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Link, useParams } from 'react-router-dom'
 import { ErrorState, LoadingState } from '../components/AsyncState'
 import { StatusBadge } from '../components/StatusBadge'
+import { useCurrentMember } from '../hooks/useCurrentMember'
 import { getPayment, reportPayment } from '../services/api'
 import { formatDateTime, formatWon } from '../services/format'
 import type { PaymentMethod } from '../services/types'
@@ -18,14 +19,19 @@ export function PaymentPage() {
   const paymentId = Number(useParams().paymentId)
   const queryClient = useQueryClient()
   const [copied, setCopied] = useState<'account' | 'amount' | null>(null)
+  const meQuery = useCurrentMember()
   const paymentQuery = useQuery({
     queryKey: ['payment', paymentId],
     queryFn: () => getPayment(paymentId),
     enabled: Number.isFinite(paymentId),
   })
-  const { register, handleSubmit, formState: { errors } } = useForm<ReportForm>({
-    defaultValues: { method: 'BANK_TRANSFER', senderName: '홍길동', transferConfirmed: false },
+  const { register, handleSubmit, setValue, formState: { errors } } = useForm<ReportForm>({
+    defaultValues: { method: 'BANK_TRANSFER', senderName: '', transferConfirmed: false },
   })
+
+  useEffect(() => {
+    if (meQuery.data?.name) setValue('senderName', meQuery.data.name)
+  }, [meQuery.data?.name, setValue])
   const reportMutation = useMutation({
     mutationFn: (values: ReportForm) => reportPayment(paymentId, {
       method: values.method,

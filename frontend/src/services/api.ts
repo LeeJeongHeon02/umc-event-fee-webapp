@@ -4,8 +4,13 @@ import type {
   AdminDashboardResponse,
   AdminDuesPaymentPage,
   AdminEventParticipantPage,
+  AdminEventCreateRequest,
+  AdminEventUpdateRequest,
+  AdminEventResponse,
   AdminPaymentReviewRequest,
   AdminPaymentReviewResponse,
+  CancelParticipationRequest,
+  CancelParticipationResponse,
   EventDetail,
   EventPage,
   JoinEventResponse,
@@ -23,6 +28,20 @@ const apiBaseUrl = new URL('/api/v1', window.location.origin).toString().replace
 const client = createClient<paths>({
   baseUrl: apiBaseUrl,
   credentials: 'include',
+})
+
+client.use({
+  async onRequest({ request }) {
+    if (import.meta.env.PROD && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(request.method)) {
+      let csrfCookie = document.cookie.split('; ').find((cookie) => cookie.startsWith('XSRF-TOKEN='))
+      if (!csrfCookie) {
+        await fetch(`${apiBaseUrl}/auth/csrf`, { credentials: 'include' })
+        csrfCookie = document.cookie.split('; ').find((cookie) => cookie.startsWith('XSRF-TOKEN='))
+      }
+      if (csrfCookie) request.headers.set('X-XSRF-TOKEN', decodeURIComponent(csrfCookie.split('=')[1]))
+    }
+    return request
+  },
 })
 
 export class ApiError extends Error {
@@ -82,6 +101,18 @@ export async function joinEvent(eventId: number): Promise<JoinEventResponse> {
   return data
 }
 
+export async function cancelEventParticipation(
+  eventId: number,
+  input: CancelParticipationRequest,
+): Promise<CancelParticipationResponse> {
+  const { data, error, response } = await client.POST('/events/{eventId}/participation/cancel', {
+    params: { path: { eventId } },
+    body: input,
+  })
+  if (!data) throwApiError(error, response)
+  return data
+}
+
 export async function getMyPayments(): Promise<PaymentPage> {
   const { data, error, response } = await client.GET('/me/payment-obligations', {
     params: { query: { page: 0, size: 20 } },
@@ -117,6 +148,43 @@ export async function getAdminDashboard(): Promise<AdminDashboardResponse> {
   const { data, error, response } = await client.GET('/admin/dashboard')
   if (!data) throwApiError(error, response)
   return data
+}
+
+export async function getAdminEvents(): Promise<AdminEventResponse[]> {
+  const { data, error, response } = await client.GET('/admin/events')
+  if (!data) throwApiError(error, response)
+  return data
+}
+
+export async function createAdminEvent(input: AdminEventCreateRequest): Promise<AdminEventResponse> {
+  const { data, error, response } = await client.POST('/admin/events', { body: input })
+  if (!data) throwApiError(error, response)
+  return data
+}
+
+export async function updateAdminEvent(eventId: number, input: AdminEventUpdateRequest): Promise<AdminEventResponse> {
+  const { data, error, response } = await client.PATCH('/admin/events/{eventId}', {
+    params: { path: { eventId } },
+    body: input,
+  })
+  if (!data) throwApiError(error, response)
+  return data
+}
+
+export async function publishAdminEvent(eventId: number, version: number): Promise<AdminEventResponse> {
+  const { data, error, response } = await client.POST('/admin/events/{eventId}/publish', {
+    params: { path: { eventId } },
+    body: { version },
+  })
+  if (!data) throwApiError(error, response)
+  return data
+}
+
+export async function deleteAdminEvent(eventId: number, version: number): Promise<void> {
+  const { error, response } = await client.DELETE('/admin/events/{eventId}', {
+    params: { path: { eventId }, query: { version } },
+  })
+  if (!response.ok) throwApiError(error, response)
 }
 
 export async function getAdminEventParticipants(eventId: number): Promise<AdminEventParticipantPage> {

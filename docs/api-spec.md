@@ -13,11 +13,11 @@
 /api/v1
 ```
 
-OAuth 시작 및 콜백 경로는 Spring Security 기본 흐름을 사용하므로 `/api/v1` 밖에 둔다.
+현재 서버는 `/api/v1`을 Servlet Context Path로 사용하므로 OAuth 시작과 콜백에도 이 접두사가 포함된다.
 
 ```text
-GET /oauth2/authorization/kakao
-GET /login/oauth2/code/kakao
+GET /api/v1/oauth2/authorization/kakao
+GET /api/v1/login/oauth2/code/kakao
 ```
 
 두 번째 경로는 카카오가 호출하는 서버 콜백이며 프론트엔드가 직접 호출하지 않는다.
@@ -780,21 +780,28 @@ PATCH /api/v1/admin/events/{eventId}
 - 권한: `STAFF`
 - 성공: `200 OK`
 
-요청은 수정할 필드와 현재 `version`을 포함한다.
+현재 구현은 초안 전체를 교체하는 방식이며 모든 필수 필드와 현재 `version`을 포함한다.
 
 ```json
 {
+  "title": "2026 가을 해커톤",
+  "summary": "교내 문제를 해결하는 팀 행사",
+  "description": "팀을 구성해 교내 문제를 해결합니다.",
   "location": "공학관 201호",
+  "startsAt": "2026-09-15T19:00:00+09:00",
+  "endsAt": "2026-09-15T21:00:00+09:00",
+  "registrationDeadline": "2026-09-12T23:59:59+09:00",
   "capacity": 60,
+  "feeAmount": 15000,
+  "allowLateCancellation": false,
   "version": 0
 }
 ```
 
 서버 규칙:
 
-- `CANCELED` 행사는 수정할 수 없다.
-- 참가비 납부 확정자가 존재하면 `feeAmount` 변경을 차단한다.
-- 버전 불일치 시 `409 RESOURCE_VERSION_CONFLICT`를 반환한다.
+- `DRAFT` 행사만 수정할 수 있다.
+- 버전 불일치 시 `409 EVENT_STATE_CONFLICT`를 반환한다.
 
 ### 8.5 행사 게시
 
@@ -812,7 +819,18 @@ POST /api/v1/admin/events/{eventId}/publish
 }
 ```
 
-### 8.6 행사 마감
+### 8.6 행사 초안 삭제
+
+```http
+DELETE /api/v1/admin/events/{eventId}?version=0
+```
+
+- 권한: `STAFF`
+- 허용 상태: 참가 이력이 없는 `DRAFT`
+- 성공: `204 No Content`
+- 버전 또는 상태가 맞지 않으면 `409`를 반환한다.
+
+### 8.7 행사 마감(후속 범위)
 
 ```http
 POST /api/v1/admin/events/{eventId}/close
@@ -829,7 +847,7 @@ POST /api/v1/admin/events/{eventId}/close
 }
 ```
 
-### 8.7 행사 취소
+### 8.8 행사 취소(후속 범위)
 
 ```http
 POST /api/v1/admin/events/{eventId}/cancel
@@ -857,7 +875,7 @@ POST /api/v1/admin/events/{eventId}/cancel
 
 미납 행사비는 `VOID`, 납부 확정 행사비는 `REFUND_PENDING`으로 일괄 변경하며 각각 상태 이력을 생성한다.
 
-### 8.8 행사 참가자·납부 현황
+### 8.9 행사 참가자·납부 현황
 
 ```http
 GET /api/v1/admin/events/{eventId}/participants

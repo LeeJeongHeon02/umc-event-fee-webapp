@@ -1,10 +1,12 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation } from '@tanstack/react-query'
+import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
 import { z } from 'zod'
 import { completeOnboarding } from '../services/api'
 import type { MemberPart } from '../services/types'
+import { useCurrentMember } from '../hooks/useCurrentMember'
 
 const parts: { value: MemberPart; label: string; description: string }[] = [
   { value: 'PLAN', label: 'Plan', description: '문제를 정의하고 경험을 설계해요' },
@@ -22,15 +24,20 @@ type FormValues = z.infer<typeof schema>
 
 export function OnboardingPage() {
   const navigate = useNavigate()
+  const meQuery = useCurrentMember()
   const {
     register,
     handleSubmit,
+    setValue,
     watch,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { name: '홍길동', part: 'PE_WEB' },
+    defaultValues: { name: '', part: 'PE_WEB' },
   })
+  useEffect(() => {
+    if (meQuery.data?.kakaoProfileName) setValue('name', meQuery.data.kakaoProfileName)
+  }, [meQuery.data?.kakaoProfileName, setValue])
   const selectedPart = watch('part')
   const name = watch('name')
   const selectedLabel = parts.find((part) => part.value === selectedPart)?.label ?? ''
@@ -86,4 +93,3 @@ export function OnboardingPage() {
     </main>
   )
 }
-

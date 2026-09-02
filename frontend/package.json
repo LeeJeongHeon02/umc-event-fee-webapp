@@ -3,12 +3,17 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "engines": {
+    "node": ">=24.19.0"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "typecheck": "tsc -b --pretty false",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:e2e:install": "playwright install chromium",
     "generate:api": "openapi-typescript ../contracts/openapi.yaml -o src/services/schema.d.ts"
   },
   "dependencies": {
@@ -22,6 +27,7 @@
     "zod": "^4.0.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@testing-library/jest-dom": "^6.0.0",
     "@testing-library/react": "^16.0.0",
     "@testing-library/user-event": "^14.0.0",

@@ -1,12 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ErrorState, LoadingState } from '../components/AsyncState'
 import { StatusBadge } from '../components/StatusBadge'
-import { getEvent, joinEvent } from '../services/api'
+import { cancelEventParticipation, getEvent, joinEvent } from '../services/api'
 import { formatDateTime, formatWon } from '../services/format'
 
 export function EventDetailPage() {
   const eventId = Number(useParams().eventId)
+  const [confirmingCancellation, setConfirmingCancellation] = useState(false)
   const queryClient = useQueryClient()
   const eventQuery = useQuery({
     queryKey: ['event', eventId],
@@ -19,6 +21,18 @@ export function EventDetailPage() {
       void queryClient.invalidateQueries({ queryKey: ['event', eventId] })
       void queryClient.invalidateQueries({ queryKey: ['events'] })
       void queryClient.invalidateQueries({ queryKey: ['my-payments'] })
+    },
+  })
+  const cancelMutation = useMutation({
+    mutationFn: () => cancelEventParticipation(eventId, {
+      version: eventQuery.data?.myParticipation?.version ?? 0,
+      reason: '회원 직접 취소',
+    }),
+    onSuccess: async () => {
+      setConfirmingCancellation(false)
+      await queryClient.invalidateQueries({ queryKey: ['event', eventId] })
+      await queryClient.invalidateQueries({ queryKey: ['events'] })
+      await queryClient.invalidateQueries({ queryKey: ['my-payments'] })
     },
   })
 
@@ -58,16 +72,47 @@ export function EventDetailPage() {
       </section>
 
       {joinMutation.isError && <p className="form-error" role="alert">참가 신청을 처리하지 못했어요. 다시 시도해 주세요.</p>}
+      {cancelMutation.isError && <p className="form-error" role="alert">참가 취소를 처리하지 못했어요. 최신 상태를 확인한 후 다시 시도해 주세요.</p>}
+
+      {event.myParticipation?.status === 'CANCELED' && (
+        <section className="cancellation-card" aria-live="polite">
+          <h2>참가 신청이 취소됐어요.</h2>
+          <p>
+            {event.myPaymentStatus === 'REFUND_PENDING'
+              ? '납부가 확인된 참가비는 운영진 환불 대기 상태로 전환됐습니다.'
+              : '참가비 납부 항목도 함께 취소됐습니다.'}
+          </p>
+        </section>
+      )}
 
       <div className="sticky-action">
         {event.myParticipation?.status === 'JOINED' ? (
-          event.myPayment && event.myPayment.status !== 'NOT_REQUIRED' ? (
-            <Link className="primary-button primary-button--block" to={`/payments/${event.myPayment.id}`}>
-              {event.myPayment.status === 'UNPAID' ? '참가비 송금하기' : '납부 상태 확인하기'}
-            </Link>
+          confirmingCancellation ? (
+            <div className="cancellation-confirm">
+              <p>참가 신청을 취소할까요? 납부 완료된 참가비는 환불 대기로 전환됩니다.</p>
+              <div>
+                <button className="secondary-button" type="button" onClick={() => setConfirmingCancellation(false)}>계속 참가하기</button>
+                <button className="danger-button" type="button" disabled={cancelMutation.isPending} onClick={() => cancelMutation.mutate()}>
+                  {cancelMutation.isPending ? '취소 중…' : '참가 취소 확정'}
+                </button>
+              </div>
+            </div>
           ) : (
-            <button className="secondary-button secondary-button--block" type="button" disabled>참가 신청 완료</button>
+            <div className="event-actions">
+              {event.myPayment && event.myPayment.status !== 'NOT_REQUIRED' ? (
+                <Link className="primary-button primary-button--block" to={`/payments/${event.myPayment.id}`}>
+                  {event.myPayment.status === 'UNPAID' ? '참가비 송금하기' : '납부 상태 확인하기'}
+                </Link>
+              ) : (
+                <button className="secondary-button secondary-button--block" type="button" disabled>참가 신청 완료</button>
+              )}
+              {event.canCancel && (
+                <button className="text-button" type="button" onClick={() => setConfirmingCancellation(true)}>참가 취소</button>
+              )}
+            </div>
           )
+        ) : event.myParticipation?.status === 'CANCELED' ? (
+          <button className="secondary-button secondary-button--block" type="button" disabled>참가 취소 완료</button>
         ) : (
           <button
             className="primary-button primary-button--block"
@@ -82,4 +127,3 @@ export function EventDetailPage() {
     </div>
   )
 }
-

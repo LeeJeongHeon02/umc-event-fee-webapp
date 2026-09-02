@@ -1,5 +1,8 @@
 import { http, HttpResponse } from 'msw'
 import type {
+  AdminEventCreateRequest,
+  AdminEventResponse,
+  AdminEventUpdateRequest,
   EventDetail,
   MeResponse,
   PaymentDetail,
@@ -25,12 +28,35 @@ let paymentDetails: PaymentDetail[] = createPaymentDetails()
 let currentAdminEventParticipants = structuredClone(adminEventParticipants)
 let currentAdminDuesPayments = structuredClone(adminDuesPayments)
 
+const createAdminEvents = (): AdminEventResponse[] => [
+  {
+    id: 42,
+    title: '2026 가을 해커톤',
+    summary: '밤샘 없이 완성하는 교내 해커톤',
+    description: '팀을 구성해 서비스를 만드는 행사입니다.',
+    location: '공학관 101호',
+    startsAt: '2026-09-15T10:00:00Z',
+    endsAt: '2026-09-15T13:00:00Z',
+    registrationDeadline: '2026-09-14T10:00:00Z',
+    capacity: 50,
+    joinedCount: 23,
+    feeAmount: 15000,
+    status: 'PUBLISHED',
+    allowLateCancellation: false,
+    createdAt: '2026-08-20T00:00:00Z',
+    updatedAt: '2026-08-21T00:00:00Z',
+    version: 1,
+  },
+]
+let currentAdminEvents = createAdminEvents()
+
 export function resetMockState() {
   currentMember = { ...activeMember }
   eventDetails = createEventDetails()
   paymentDetails = createPaymentDetails()
   currentAdminEventParticipants = structuredClone(adminEventParticipants)
   currentAdminDuesPayments = structuredClone(adminDuesPayments)
+  currentAdminEvents = createAdminEvents()
 }
 
 function problem(status: number, code: string, detail: string) {
@@ -58,6 +84,64 @@ export const handlers = [
       displayNickname: `${partLabel(body.part)} ${body.name}`,
     }
     return HttpResponse.json(currentMember)
+  }),
+
+  http.get(/\/api\/v1\/admin\/events$/, () => HttpResponse.json(currentAdminEvents)),
+
+  http.post(/\/api\/v1\/admin\/events$/, async ({ request }) => {
+    const body = (await request.json()) as AdminEventCreateRequest
+    const now = new Date().toISOString()
+    const created: AdminEventResponse = {
+      ...body,
+      id: Math.max(42, ...currentAdminEvents.map((event) => event.id)) + 1,
+      joinedCount: 0,
+      status: 'DRAFT',
+      createdAt: now,
+      updatedAt: now,
+      version: 0,
+    }
+    currentAdminEvents = [created, ...currentAdminEvents]
+    return HttpResponse.json(created, { status: 201 })
+  }),
+
+  http.patch(/\/api\/v1\/admin\/events\/\d+$/, async ({ request }) => {
+    const eventId = Number(new URL(request.url).pathname.match(/events\/(\d+)$/)?.[1])
+    const body = (await request.json()) as AdminEventUpdateRequest
+    const index = currentAdminEvents.findIndex((event) => event.id === eventId)
+    if (index < 0) return problem(404, 'RESOURCE_NOT_FOUND', '행사를 찾을 수 없습니다.')
+    if (currentAdminEvents[index].status !== 'DRAFT' || currentAdminEvents[index].version !== body.version) {
+      return problem(409, 'EVENT_STATE_CONFLICT', '행사 상태가 최신이 아닙니다.')
+    }
+    currentAdminEvents[index] = {
+      ...currentAdminEvents[index],
+      ...body,
+      updatedAt: new Date().toISOString(),
+      version: body.version + 1,
+    }
+    return HttpResponse.json(currentAdminEvents[index])
+  }),
+
+  http.post(/\/api\/v1\/admin\/events\/\d+\/publish$/, async ({ request }) => {
+    const eventId = Number(new URL(request.url).pathname.match(/events\/(\d+)\/publish$/)?.[1])
+    const body = (await request.json()) as { version: number }
+    const index = currentAdminEvents.findIndex((event) => event.id === eventId)
+    if (index < 0) return problem(404, 'RESOURCE_NOT_FOUND', '행사를 찾을 수 없습니다.')
+    if (currentAdminEvents[index].status !== 'DRAFT' || currentAdminEvents[index].version !== body.version) {
+      return problem(409, 'EVENT_STATE_CONFLICT', '행사 상태가 최신이 아닙니다.')
+    }
+    currentAdminEvents[index] = { ...currentAdminEvents[index], status: 'PUBLISHED', version: body.version + 1 }
+    return HttpResponse.json(currentAdminEvents[index])
+  }),
+
+  http.delete(/\/api\/v1\/admin\/events\/\d+$/, ({ request }) => {
+    const eventId = Number(new URL(request.url).pathname.match(/events\/(\d+)$/)?.[1])
+    const index = currentAdminEvents.findIndex((event) => event.id === eventId)
+    if (index < 0) return problem(404, 'RESOURCE_NOT_FOUND', '행사를 찾을 수 없습니다.')
+    if (currentAdminEvents[index].status !== 'DRAFT') {
+      return problem(409, 'EVENT_NOT_DELETABLE', '초안 행사만 삭제할 수 있습니다.')
+    }
+    currentAdminEvents.splice(index, 1)
+    return new HttpResponse(null, { status: 204 })
   }),
 
   http.get(/\/api\/v1\/events$/, () =>
@@ -109,6 +193,52 @@ export const handlers = [
       canCancel: true,
     }
     return HttpResponse.json({ participation, payment }, { status: 201 })
+  }),
+
+  http.post(/\/api\/v1\/events\/\d+\/participation\/cancel$/, async ({ request }) => {
+    const eventId = Number(new URL(request.url).pathname.match(/events\/(\d+)\/participation\/cancel$/)?.[1])
+    const eventIndex = eventDetails.findIndex((item) => item.id === eventId)
+    if (eventIndex < 0) return problem(404, 'RESOURCE_NOT_FOUND', '행사를 찾을 수 없습니다.')
+    const event = eventDetails[eventIndex]
+    if (event.myParticipation?.status !== 'JOINED') {
+      return problem(409, 'PARTICIPATION_STATE_CONFLICT', '참가 상태가 최신이 아닙니다.')
+    }
+    const body = (await request.json()) as { version: number; reason?: string }
+    if (event.myParticipation.version !== body.version) {
+      return problem(409, 'PARTICIPATION_STATE_CONFLICT', '참가 상태가 최신이 아닙니다.')
+    }
+
+    const paymentStatus = event.myPaymentStatus === 'CONFIRMED' ? 'REFUND_PENDING' : 'VOID'
+    const canceledAt = new Date().toISOString()
+    eventDetails[eventIndex] = {
+      ...event,
+      joinedCount: Math.max(0, event.joinedCount - 1),
+      myParticipationStatus: 'CANCELED',
+      myPaymentStatus: paymentStatus,
+      myParticipation: {
+        ...event.myParticipation,
+        status: 'CANCELED',
+        canceledAt,
+        version: event.myParticipation.version + 1,
+      },
+      myPayment: event.myPayment ? { ...event.myPayment, status: paymentStatus } : event.myPayment,
+      canJoin: false,
+      canCancel: false,
+    }
+    const paymentIndex = paymentDetails.findIndex((payment) => payment.id === event.myPayment?.id)
+    if (paymentIndex >= 0) {
+      paymentDetails[paymentIndex] = {
+        ...paymentDetails[paymentIndex],
+        status: paymentStatus,
+        version: paymentDetails[paymentIndex].version + 1,
+        updatedAt: canceledAt,
+      }
+    }
+    return HttpResponse.json({
+      participationStatus: 'CANCELED',
+      paymentStatus,
+      refundRequired: paymentStatus === 'REFUND_PENDING',
+    })
   }),
 
   http.get(/\/api\/v1\/me\/payment-obligations$/, () =>
