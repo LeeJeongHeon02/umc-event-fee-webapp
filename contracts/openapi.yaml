@@ -819,31 +819,68 @@ components:
         default: 20
   responses:
     BadRequest:
-      description: 잘못된 요청
+      description: 요청 본문·경로·쿼리 값 오류 (`VALIDATION_FAILED`, `MALFORMED_JSON`, `INVALID_REQUEST`)
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/Problem'
+          examples:
+            validationFailed:
+              summary: 필드 검증 실패
+              value:
+                type: about:blank
+                title: Bad Request
+                status: 400
+                code: VALIDATION_FAILED
+                detail: 요청 값을 확인해 주세요.
+                instance: /api/v1/me/onboarding
+                timestamp: '2026-09-03T09:30:00Z'
+                fieldErrors:
+                  - field: name
+                    reason: 공백일 수 없습니다
     Unauthorized:
-      description: 로그인 필요
+      description: 카카오 로그인 세션 없음 또는 만료 (`AUTHENTICATION_REQUIRED`)
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/Problem'
+          examples:
+            authenticationRequired:
+              value:
+                type: about:blank
+                title: Unauthorized
+                status: 401
+                code: AUTHENTICATION_REQUIRED
+                detail: 카카오 로그인이 필요하거나 로그인 세션이 만료되었습니다.
+                instance: /api/v1/me
+                timestamp: '2026-09-03T09:30:00Z'
+                fieldErrors: []
     Forbidden:
-      description: 접근 권한 없음
+      description: 역할·소유권 부족 또는 CSRF 토큰 오류 (`FORBIDDEN`, `CSRF_TOKEN_INVALID`)
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/Problem'
     NotFound:
-      description: 리소스 없음
+      description: 리소스가 없거나 현재 사용자에게 비공개 (`RESOURCE_NOT_FOUND`)
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/Problem'
     Conflict:
-      description: 현재 상태와 요청 충돌
+      description: 도메인 상태·낙관적 잠금 충돌 (`CONCURRENT_UPDATE` 또는 도메인별 `*_CONFLICT`)
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    MethodNotAllowed:
+      description: 지원하지 않는 HTTP 메서드 (`METHOD_NOT_ALLOWED`)
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    InternalServerError:
+      description: 예상하지 못한 서버 오류 (`INTERNAL_SERVER_ERROR`). 내부 예외 상세는 노출하지 않는다.
       content:
         application/problem+json:
           schema:
@@ -1713,30 +1750,49 @@ components:
           format: int64
     Problem:
       type: object
-      required: [title, status, code, detail, timestamp]
+      description: 모든 API 실패에 사용하는 RFC 7807 호환 공통 응답
+      required: [type, title, status, code, detail, instance, timestamp, fieldErrors]
       properties:
         type:
           type: string
+          description: 오류 유형 URI. 별도 문서 URI가 없으면 about:blank
+          example: about:blank
         title:
           type: string
+          description: HTTP 상태 이름
+          example: Bad Request
         status:
           type: integer
+          description: HTTP 상태 코드
+          example: 400
         code:
           type: string
+          description: 프론트엔드 분기 처리용 안정적인 오류 코드
+          example: VALIDATION_FAILED
         detail:
           type: string
+          description: 사용자에게 표시할 수 있는 오류 설명
+          example: 요청 값을 확인해 주세요.
         instance:
           type: string
+          description: 오류가 발생한 요청 경로
+          example: /api/v1/me/onboarding
         timestamp:
           type: string
           format: date-time
+          description: 오류 발생 시각(UTC)
         fieldErrors:
           type: array
+          description: 필드 단위 검증 오류. 검증 오류가 아니면 빈 배열
           items:
             type: object
             required: [field, reason]
             properties:
               field:
                 type: string
+                description: 오류 필드명
+                example: name
               reason:
                 type: string
+                description: 검증 실패 이유
+                example: 공백일 수 없습니다

@@ -31,10 +31,40 @@ class ApiContractIntegrationTest {
                 .andExpect(jsonPath("$.paths['/events'].get.summary").value("게시 행사 목록 조회"))
                 .andExpect(jsonPath("$.paths['/admin/events/{eventId}/participants'].get.summary")
                         .value("행사별 참가자·납부 현황"))
-                .andExpect(jsonPath("$.components.securitySchemes.kakaoSession.in").value("cookie"));
+                .andExpect(jsonPath("$.components.securitySchemes.kakaoSession.in").value("cookie"))
+                .andExpect(jsonPath("$.components.schemas.Problem.properties.code.description").exists())
+                .andExpect(jsonPath("$.paths['/me/onboarding'].patch.responses['400'].content['application/problem+json'].schema['$ref']")
+                        .value("#/components/schemas/Problem"))
+                .andExpect(jsonPath("$.paths['/me/onboarding'].patch.responses['500'].content['application/problem+json'].examples.example.value.code")
+                        .value("INTERNAL_SERVER_ERROR"));
 
         mockMvc.perform(get("/swagger-ui/index.html"))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void 잘못된_입력은_필드_정보가_포함된_공통_400_응답을_반환한다() throws Exception {
+        mockMvc.perform(patch("/me/onboarding")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {"name":"","part":"PE_WEB"}
+                            """))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.type").value("about:blank"))
+                .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"))
+                .andExpect(jsonPath("$.instance").value("/me/onboarding"))
+                .andExpect(jsonPath("$.fieldErrors[0].field").value("name"));
+    }
+
+    @Test
+    void 존재하지_않는_API는_공통_404_응답을_반환한다() throws Exception {
+        mockMvc.perform(get("/does-not-exist"))
+                .andExpect(status().isNotFound())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.code").value("RESOURCE_NOT_FOUND"))
+                .andExpect(jsonPath("$.instance").value("/does-not-exist"))
+                .andExpect(jsonPath("$.fieldErrors").isArray());
     }
 
     @Test

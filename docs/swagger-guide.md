@@ -65,6 +65,37 @@ Swagger UI의 각 API 설명에는 권한, 상태 전이, `version` 사용, 실�
 | `401` | 카카오 로그인 세션 없음 또는 만료 |
 | `403` | 승인 상태·역할·소유권 부족 |
 | `404` | 리소스가 없거나 현재 회원에게 비공개 |
+| `405` | 해당 경로에서 지원하지 않는 HTTP 메서드 |
 | `409` | 상태 전이 불가 또는 version 충돌 |
+| `500` | 예상하지 못한 서버 오류 |
 
 `409`가 오면 해당 리소스를 다시 조회해 최신 `version`과 상태를 확인한 뒤 다시 요청한다.
+
+모든 오류 응답은 다음 필드를 항상 포함한다.
+
+| 필드 | 용도 |
+| --- | --- |
+| `type` | 오류 유형 URI. 현재는 `about:blank` |
+| `title` / `status` | HTTP 상태 이름과 숫자 코드 |
+| `code` | 프론트엔드 로직에서 사용할 안정적인 오류 코드 |
+| `detail` | 사용자에게 표시 가능한 한국어 안내 |
+| `instance` | 오류가 발생한 API 요청 경로 |
+| `timestamp` | 오류가 발생한 UTC 시각 |
+| `fieldErrors` | Bean Validation 실패 필드와 사유. 해당 사항이 없으면 빈 배열 |
+
+```json
+{
+  "type": "about:blank",
+  "title": "Bad Request",
+  "status": 400,
+  "code": "VALIDATION_FAILED",
+  "detail": "요청 값을 확인해 주세요.",
+  "instance": "/api/v1/me/onboarding",
+  "timestamp": "2026-09-03T09:30:00Z",
+  "fieldErrors": [
+    { "field": "name", "reason": "공백일 수 없습니다" }
+  ]
+}
+```
+
+프론트엔드는 화면 문구가 바뀔 수 있는 `detail` 대신 `code`로 분기한다. `500` 응답에는 보안을 위해 예외 메시지, SQL, 스택 트레이스를 포함하지 않으며 상세 원인은 서버 로그에서 확인한다.

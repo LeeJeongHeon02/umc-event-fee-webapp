@@ -72,15 +72,19 @@ export function resetMockState() {
 }
 
 function problem(status: number, code: string, detail: string) {
+  const title = ({ 400: 'Bad Request', 401: 'Unauthorized', 403: 'Forbidden', 404: 'Not Found', 409: 'Conflict' } as Record<number, string>)[status] ?? 'Internal Server Error'
   return HttpResponse.json(
     {
-      title: status === 404 ? 'Not Found' : 'Conflict',
+      type: 'about:blank',
+      title,
       status,
       code,
       detail,
+      instance: '/api/v1/mock',
       timestamp: new Date().toISOString(),
+      fieldErrors: [],
     },
-    { status },
+    { status, headers: { 'Content-Type': 'application/problem+json' } },
   )
 }
 

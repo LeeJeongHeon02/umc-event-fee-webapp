@@ -22,7 +22,8 @@ public class SecurityConfig {
     @Order(1)
     SecurityFilterChain productionSecurity(HttpSecurity http,
                                            KakaoOAuth2UserService kakaoOAuth2UserService,
-                                           OAuthLoginSuccessHandler successHandler) throws Exception {
+                                           OAuthLoginSuccessHandler successHandler,
+                                           ApiSecurityExceptionHandler securityExceptionHandler) throws Exception {
         CookieCsrfTokenRepository csrfTokenRepository = cookieCsrfTokenRepository();
         return http
                 .csrf(csrf -> csrf
@@ -32,6 +33,10 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/health", "/oauth2/**", "/login/**",
                                 "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .anyRequest().authenticated())
+                // API callers always receive the documented Problem JSON instead of an HTML login redirect.
+                .exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint(securityExceptionHandler)
+                        .accessDeniedHandler(securityExceptionHandler))
                 .oauth2Login(oauth -> oauth
                         .userInfoEndpoint(userInfo -> userInfo.userService(kakaoOAuth2UserService))
                         .successHandler(successHandler))

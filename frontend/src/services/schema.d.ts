@@ -1066,23 +1066,60 @@ export interface components {
             /** Format: int64 */
             unreadCount: number;
         };
+        /** @description 모든 API 실패에 사용하는 RFC 7807 호환 공통 응답 */
         Problem: {
-            type?: string;
+            /**
+             * @description 오류 유형 URI. 별도 문서 URI가 없으면 about:blank
+             * @example about:blank
+             */
+            type: string;
+            /**
+             * @description HTTP 상태 이름
+             * @example Bad Request
+             */
             title: string;
+            /**
+             * @description HTTP 상태 코드
+             * @example 400
+             */
             status: number;
+            /**
+             * @description 프론트엔드 분기 처리용 안정적인 오류 코드
+             * @example VALIDATION_FAILED
+             */
             code: string;
+            /**
+             * @description 사용자에게 표시할 수 있는 오류 설명
+             * @example 요청 값을 확인해 주세요.
+             */
             detail: string;
-            instance?: string;
-            /** Format: date-time */
+            /**
+             * @description 오류가 발생한 요청 경로
+             * @example /api/v1/me/onboarding
+             */
+            instance: string;
+            /**
+             * Format: date-time
+             * @description 오류 발생 시각(UTC)
+             */
             timestamp: string;
-            fieldErrors?: {
+            /** @description 필드 단위 검증 오류. 검증 오류가 아니면 빈 배열 */
+            fieldErrors: {
+                /**
+                 * @description 오류 필드명
+                 * @example name
+                 */
                 field: string;
+                /**
+                 * @description 검증 실패 이유
+                 * @example 공백일 수 없습니다
+                 */
                 reason: string;
             }[];
         };
     };
     responses: {
-        /** @description 잘못된 요청 */
+        /** @description 요청 본문·경로·쿼리 값 오류 (`VALIDATION_FAILED`, `MALFORMED_JSON`, `INVALID_REQUEST`) */
         BadRequest: {
             headers: {
                 [name: string]: unknown;
@@ -1091,7 +1128,7 @@ export interface components {
                 "application/problem+json": components["schemas"]["Problem"];
             };
         };
-        /** @description 로그인 필요 */
+        /** @description 카카오 로그인 세션 없음 또는 만료 (`AUTHENTICATION_REQUIRED`) */
         Unauthorized: {
             headers: {
                 [name: string]: unknown;
@@ -1100,7 +1137,7 @@ export interface components {
                 "application/problem+json": components["schemas"]["Problem"];
             };
         };
-        /** @description 접근 권한 없음 */
+        /** @description 역할·소유권 부족 또는 CSRF 토큰 오류 (`FORBIDDEN`, `CSRF_TOKEN_INVALID`) */
         Forbidden: {
             headers: {
                 [name: string]: unknown;
@@ -1109,7 +1146,7 @@ export interface components {
                 "application/problem+json": components["schemas"]["Problem"];
             };
         };
-        /** @description 리소스 없음 */
+        /** @description 리소스가 없거나 현재 사용자에게 비공개 (`RESOURCE_NOT_FOUND`) */
         NotFound: {
             headers: {
                 [name: string]: unknown;
@@ -1118,8 +1155,26 @@ export interface components {
                 "application/problem+json": components["schemas"]["Problem"];
             };
         };
-        /** @description 현재 상태와 요청 충돌 */
+        /** @description 도메인 상태·낙관적 잠금 충돌 (`CONCURRENT_UPDATE` 또는 도메인별 `*_CONFLICT`) */
         Conflict: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["Problem"];
+            };
+        };
+        /** @description 지원하지 않는 HTTP 메서드 (`METHOD_NOT_ALLOWED`) */
+        MethodNotAllowed: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["Problem"];
+            };
+        };
+        /** @description 예상하지 못한 서버 오류 (`INTERNAL_SERVER_ERROR`). 내부 예외 상세는 노출하지 않는다. */
+        InternalServerError: {
             headers: {
                 [name: string]: unknown;
             };

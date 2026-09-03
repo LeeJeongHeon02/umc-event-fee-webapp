@@ -1,11 +1,16 @@
 package com.dclub.api.global.config;
 
+import com.dclub.api.global.common.ProblemResponse;
+import io.swagger.v3.core.converter.ModelConverters;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.License;
+import io.swagger.v3.oas.models.media.Content;
+import io.swagger.v3.oas.models.examples.Example;
+import io.swagger.v3.oas.models.media.Schema;
 import io.swagger.v3.oas.models.responses.ApiResponse;
 import io.swagger.v3.oas.models.responses.ApiResponses;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
@@ -40,15 +45,20 @@ public class OpenApiConfig {
 
                                 금액은 원 단위 정수이며, 날짜·시간은 ISO-8601 UTC 시각입니다.
                                 `version` 필드는 낙관적 잠금용입니다. 최신 응답의 version을 상태 변경 요청에 그대로 전달하세요.
+
+                                **공통 오류 응답**은 `application/problem+json`이며 다음 필드를 항상 포함합니다.
+                                - `status`: HTTP 상태 코드
+                                - `code`: 프론트엔드 분기 처리용 안정적인 오류 코드
+                                - `detail`: 사용자에게 표시 가능한 설명
+                                - `instance`: 오류가 발생한 API 경로
+                                - `fieldErrors`: 입력 필드별 검증 오류
+
+                                대표 오류 코드는 `AUTHENTICATION_REQUIRED`, `CSRF_TOKEN_INVALID`, `FORBIDDEN`,
+                                `VALIDATION_FAILED`, `RESOURCE_NOT_FOUND`, `CONCURRENT_UPDATE`, `INTERNAL_SERVER_ERROR`입니다.
                                 """)
                         .contact(new Contact().name("UMC Club Operations"))
                         .license(new License().name("Private club use")))
-                .components(new Components().addSecuritySchemes(SESSION_AUTH,
-                        new SecurityScheme()
-                                .type(SecurityScheme.Type.APIKEY)
-                                .in(SecurityScheme.In.COOKIE)
-                                .name("JSESSIONID")
-                                .description("카카오 로그인 완료 후 브라우저에 자동 저장되는 서버 세션 쿠키입니다. 직접 입력하지 않습니다.")))
+                .components(apiComponents())
                 .addSecurityItem(new SecurityRequirement().addList(SESSION_AUTH))
                 .tags(List.of(
                         new Tag().name("Authentication").description("카카오 OAuth 세션과 CSRF 토큰"),
@@ -74,6 +84,9 @@ public class OpenApiConfig {
                 customize("PUT " + path, item.getPut());
                 customize("DELETE " + path, item.getDelete());
             });
+            // Springdoc merges controller schemas after the base OpenAPI bean is created. Register this alias
+            // at the final customization stage as well so all #/components/schemas/Problem references resolve.
+            registerProblemSchemas(openApi.getComponents());
         };
     }
 
@@ -87,11 +100,12 @@ public class OpenApiConfig {
         operation.setSummary(doc.summary());
         operation.setDescription(doc.description());
         response(operation, doc.successCode(), doc.successDescription());
-        response(operation, "401", "카카오 로그인 세션이 없거나 만료되었습니다.");
-        response(operation, "403", "승인된 회원 또는 필요한 운영진 권한이 없습니다.");
+        response(operation, "401", "`AUTHENTICATION_REQUIRED`: 카카오 로그인 세션이 없거나 만료되었습니다.");
+        response(operation, "403", "`FORBIDDEN`: 권한이 없거나 `CSRF_TOKEN_INVALID`: 보안 토큰이 없거나 만료되었습니다.");
         for (String errorCode : doc.errorCodes()) {
             response(operation, errorCode, errorDescription(errorCode));
         }
+        response(operation, "500", "`INTERNAL_SERVER_ERROR`: 예상하지 못한 서버 오류입니다. 상세 내부 오류는 응답에 노출하지 않습니다.");
     }
 
     private void response(Operation operation, String status, String description) {
@@ -106,13 +120,111 @@ public class OpenApiConfig {
             responses.addApiResponse(status, response);
         }
         response.setDescription(description);
+        if (status.startsWith("4") || status.startsWith("5")) {
+            response.setContent(problemContent(status));
+        }
+    }
+
+    private Components apiComponents() {
+        Components components = new Components().addSecuritySchemes(SESSION_AUTH,
+                new SecurityScheme()
+                        .type(SecurityScheme.Type.APIKEY)
+                        .in(SecurityScheme.In.COOKIE)
+                        .name("JSESSIONID")
+                        .description("카카오 로그인 완료 후 브라우저에 자동 저장되는 서버 세션 쿠키입니다. 직접 입력하지 않습니다."));
+        // ModelConverters uses the Java class name by default. Publish an explicit "Problem" alias so that
+        // every error response has a stable schema reference even if the implementation class is renamed.
+        registerProblemSchemas(components);
+        return components;
+    }
+
+    private void registerProblemSchemas(Components components) {
+        Map<String, Schema> problemSchemas = ModelConverters.getInstance().read(ProblemResponse.class);
+        problemSchemas.forEach(components::addSchemas);
+        Schema<?> problemSchema = problemSchemas.getOrDefault("Problem", problemSchemas.get("ProblemResponse"));
+        if (problemSchema != null) {
+            describeProblemSchema(problemSchema);
+            components.addSchemas("Problem", problemSchema);
+        }
+    }
+
+    private void describeProblemSchema(Schema<?> problemSchema) {
+        problemSchema.setDescription("API 공통 오류 응답. Content-Type은 application/problem+json입니다.");
+        problemSchema.setRequired(List.of(
+                "type", "title", "status", "code", "detail", "instance", "timestamp", "fieldErrors"));
+        describeProperty(problemSchema, "type", "오류 유형 URI", "about:blank");
+        describeProperty(problemSchema, "title", "HTTP 상태 이름", "Bad Request");
+        describeProperty(problemSchema, "status", "HTTP 상태 코드", 400);
+        describeProperty(problemSchema, "code", "프론트엔드 분기 처리용 안정적인 오류 코드", "VALIDATION_FAILED");
+        describeProperty(problemSchema, "detail", "사용자에게 표시할 수 있는 오류 설명", "요청 값을 확인해 주세요.");
+        describeProperty(problemSchema, "instance", "오류가 발생한 요청 경로", "/api/v1/me/onboarding");
+        // DateTimeSchema examples are serialized differently by springdoc; the complete response example below
+        // already demonstrates the timestamp value, so the property only needs its precise description here.
+        describeProperty(problemSchema, "timestamp", "오류 발생 시각(UTC)", null);
+        describeProperty(problemSchema, "fieldErrors", "필드 단위 검증 오류. 검증 오류가 아니면 빈 배열입니다.", List.of());
+    }
+
+    private void describeProperty(Schema<?> schema, String name, String description, Object example) {
+        if (schema.getProperties() == null || schema.getProperties().get(name) == null) return;
+        Schema<?> property = schema.getProperties().get(name);
+        property.setDescription(description);
+        if (example != null) property.setExample(example);
+    }
+
+    private Content problemContent(String status) {
+        String code = switch (status) {
+            case "400" -> "VALIDATION_FAILED";
+            case "401" -> "AUTHENTICATION_REQUIRED";
+            case "403" -> "FORBIDDEN";
+            case "404" -> "RESOURCE_NOT_FOUND";
+            case "409" -> "CONCURRENT_UPDATE";
+            default -> "INTERNAL_SERVER_ERROR";
+        };
+        Map<String, Object> value = new LinkedHashMap<>();
+        value.put("type", "about:blank");
+        value.put("title", statusTitle(status));
+        value.put("status", Integer.parseInt(status));
+        value.put("code", code);
+        value.put("detail", errorDetail(status));
+        value.put("instance", "/api/v1/example");
+        value.put("timestamp", "2026-09-03T09:30:00Z");
+        value.put("fieldErrors", List.of());
+
+        io.swagger.v3.oas.models.media.MediaType mediaType =
+                new io.swagger.v3.oas.models.media.MediaType()
+                        .schema(new Schema<>().$ref("#/components/schemas/Problem"))
+                        .addExamples("example", new Example().summary(code).value(value));
+        return new Content().addMediaType("application/problem+json", mediaType);
+    }
+
+    private String statusTitle(String status) {
+        return switch (status) {
+            case "400" -> "Bad Request";
+            case "401" -> "Unauthorized";
+            case "403" -> "Forbidden";
+            case "404" -> "Not Found";
+            case "405" -> "Method Not Allowed";
+            case "409" -> "Conflict";
+            default -> "Internal Server Error";
+        };
+    }
+
+    private String errorDetail(String status) {
+        return switch (status) {
+            case "400" -> "요청 값을 확인해 주세요.";
+            case "401" -> "카카오 로그인이 필요하거나 로그인 세션이 만료되었습니다.";
+            case "403" -> "요청을 수행할 권한이 없습니다.";
+            case "404" -> "요청한 리소스를 찾을 수 없습니다.";
+            case "409" -> "다른 요청으로 상태가 변경되었습니다. 새로고침 후 다시 시도해 주세요.";
+            default -> "서버에서 요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.";
+        };
     }
 
     private String errorDescription(String status) {
         return switch (status) {
-            case "400" -> "요청 본문·경로·쿼리 값 검증에 실패했습니다. Problem Details의 code와 fieldErrors를 확인하세요.";
-            case "404" -> "대상 리소스가 없거나, 현재 사용자에게 노출되지 않는 리소스입니다.";
-            case "409" -> "현재 상태에서 수행할 수 없거나 version이 최신 상태와 다릅니다. 최신 상세를 다시 조회하세요.";
+            case "400" -> "`VALIDATION_FAILED`, `MALFORMED_JSON`, `INVALID_REQUEST`: 요청 본문·경로·쿼리 값과 fieldErrors를 확인하세요.";
+            case "404" -> "`RESOURCE_NOT_FOUND`: 대상 리소스가 없거나 현재 사용자에게 노출되지 않습니다.";
+            case "409" -> "도메인 상태 충돌 또는 `CONCURRENT_UPDATE`: 최신 상세와 version을 다시 조회하세요.";
             default -> "요청을 처리할 수 없습니다.";
         };
     }
