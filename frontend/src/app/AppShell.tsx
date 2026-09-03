@@ -1,15 +1,17 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import type { ReactNode } from 'react'
+import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { getNotifications } from '../services/api'
 import { useCurrentMember } from '../hooks/useCurrentMember'
 
 const navItems = [
-  { to: '/home', label: '홈', symbol: '⌂' },
-  { to: '/home#events', label: '행사', symbol: '◇' },
-  { to: '/home#payments', label: '납부', symbol: '₩' },
+  { to: '/home', hash: '', label: '홈', icon: <HomeIcon /> },
+  { to: '/home#events', hash: '#events', label: '행사', icon: <CalendarIcon /> },
+  { to: '/home#payments', hash: '#payments', label: '납부', icon: <WalletIcon /> },
 ]
 
 export function AppShell() {
+  const location = useLocation()
   const meQuery = useCurrentMember()
   const canManage = meQuery.data?.role === 'STAFF' || meQuery.data?.role === 'ADMIN'
   const memberName = meQuery.data?.name ?? meQuery.data?.kakaoProfileName ?? '회원'
@@ -26,7 +28,7 @@ export function AppShell() {
         <div className="topbar__actions">
           {canManage && <NavLink className="admin-mode-link" to="/admin">운영진</NavLink>}
           <NavLink className="icon-button" to="/notifications" aria-label={`알림 ${notifications.data?.unreadCount ?? 0}개`}>
-            <span aria-hidden="true">●</span>
+            <BellIcon />
             {(notifications.data?.unreadCount ?? 0) > 0 && <span className="notification-dot" />}
           </NavLink>
           <div className="avatar" aria-label={memberLabel}>{memberName.slice(0, 1)}</div>
@@ -38,13 +40,36 @@ export function AppShell() {
       </main>
 
       <nav className="bottom-nav" aria-label="주요 메뉴">
-        {navItems.map((item) => (
-          <NavLink key={item.label} to={item.to}>
-            <span aria-hidden="true">{item.symbol}</span>
-            {item.label}
-          </NavLink>
-        ))}
+        {navItems.map((item) => {
+          const isActive = location.pathname === '/home' && location.hash === item.hash
+          return (
+            <Link key={item.label} to={item.to} className={isActive ? 'active' : undefined} aria-current={isActive ? 'page' : undefined}>
+              {item.icon}
+              <span>{item.label}</span>
+            </Link>
+          )
+        })}
       </nav>
     </div>
   )
+}
+
+function Icon({ children }: { children: ReactNode }) {
+  return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{children}</svg>
+}
+
+function HomeIcon() {
+  return <Icon><path d="m3.5 10.5 8.5-7 8.5 7" /><path d="M5.5 9.5V20h13V9.5" /><path d="M9.5 20v-6h5v6" /></Icon>
+}
+
+function CalendarIcon() {
+  return <Icon><rect x="3.5" y="5.5" width="17" height="15" rx="2" /><path d="M8 3v5M16 3v5M3.5 10h17" /></Icon>
+}
+
+function WalletIcon() {
+  return <Icon><path d="M4 6.5h13.5a2.5 2.5 0 0 1 2.5 2.5v9H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h11" /><path d="M15 11h5v4h-5a2 2 0 0 1 0-4Z" /></Icon>
+}
+
+function BellIcon() {
+  return <Icon><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" /><path d="M10 21h4" /></Icon>
 }

@@ -1,5 +1,4 @@
 import { useQuery } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
 import { ErrorState, LoadingState } from '../components/AsyncState'
 import { EventCard } from '../components/EventCard'
 import { PaymentCard } from '../components/PaymentCard'
@@ -21,43 +20,70 @@ export function HomePage() {
   const events = eventsQuery.data!.items
   const payments = paymentsQuery.data!.items
   const actionablePayments = payments.filter((payment) => ['UNPAID', 'REJECTED', 'REPORTED'].includes(payment.status))
+  const joinedEventCount = events.filter((event) => event.myParticipationStatus === 'JOINED').length
+  const reportedPaymentCount = payments.filter((payment) => payment.status === 'REPORTED').length
+  const unpaidPaymentCount = payments.filter((payment) => ['UNPAID', 'REJECTED'].includes(payment.status)).length
+  const today = new Date()
+  const todayLabel = today.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' })
 
   return (
     <div className="page home-page">
-      <section className="home-hero">
-        <div>
-          <span className="eyebrow">{me.displayNickname}</span>
-          <h1>안녕하세요, {me.name}님.<br />이번 주도 같이 만들어봐요.</h1>
+      <section className="home-welcome" aria-labelledby="home-title">
+        <div className="home-welcome__copy">
+          <span className="member-label">{me.displayNickname}</span>
+          <h1 id="home-title">안녕하세요, <strong>{me.name}</strong>님.</h1>
+          <p>행사 일정과 납부 현황을 한눈에 확인하세요.</p>
         </div>
-        <div className="hero-shape" aria-hidden="true"><span>D:</span></div>
+        <time className="home-date" dateTime={today.toISOString().slice(0, 10)}>
+          <span>오늘</span>
+          <strong>{todayLabel}</strong>
+        </time>
       </section>
 
-      <section className="summary-strip" aria-label="내 활동 요약">
-        <div><strong>{events.filter((event) => event.myParticipationStatus === 'JOINED').length}</strong><span>신청 행사</span></div>
-        <div><strong>{payments.filter((payment) => payment.status === 'REPORTED').length}</strong><span>확인 대기</span></div>
-        <div><strong>{payments.filter((payment) => payment.status === 'UNPAID').length}</strong><span>미납</span></div>
+      <section className="home-overview" aria-label="내 활동 요약">
+        <a href="#events" className="overview-item overview-item--events">
+          <span className="overview-item__label">참여 중인 행사</span>
+          <strong>{joinedEventCount}<small>건</small></strong>
+          <span className="overview-item__hint">일정 확인</span>
+        </a>
+        <a href="#payments" className="overview-item">
+          <span className="overview-item__label">입금 확인 대기</span>
+          <strong>{reportedPaymentCount}<small>건</small></strong>
+          <span className="overview-item__hint">처리 중</span>
+        </a>
+        <a href="#payments" className={`overview-item${unpaidPaymentCount > 0 ? ' overview-item--attention' : ''}`}>
+          <span className="overview-item__label">납부 필요</span>
+          <strong>{unpaidPaymentCount}<small>건</small></strong>
+          <span className="overview-item__hint">내역 확인</span>
+        </a>
       </section>
 
-      {actionablePayments.length > 0 && (
-        <section className="page-section" id="payments">
-          <div className="section-heading">
-            <div><span className="eyebrow">PAYMENT</span><h2>확인이 필요한 납부</h2></div>
-            <span className="section-count">{actionablePayments.length}</span>
-          </div>
+      <section className="page-section" id="payments">
+        <div className="section-heading">
+          <div><span className="eyebrow">납부</span><h2>확인이 필요한 내역</h2></div>
+          <span className="section-meta">{actionablePayments.length}건</span>
+        </div>
+        {actionablePayments.length > 0 ? (
           <div className="stack-list">
             {actionablePayments.map((payment) => <PaymentCard key={payment.id} payment={payment} />)}
           </div>
-        </section>
-      )}
+        ) : (
+          <div className="home-empty"><strong>확인이 필요한 납부가 없어요.</strong><span>새 회비나 참가비가 생기면 여기에서 알려드릴게요.</span></div>
+        )}
+      </section>
 
       <section className="page-section" id="events">
         <div className="section-heading">
-          <div><span className="eyebrow">UPCOMING</span><h2>다가오는 행사</h2></div>
-          <Link className="text-link" to="/home#events">전체보기</Link>
+          <div><span className="eyebrow">일정</span><h2>다가오는 행사</h2></div>
+          <span className="section-meta">{events.length}건</span>
         </div>
-        <div className="stack-list">
-          {events.map((event) => <EventCard key={event.id} event={event} />)}
-        </div>
+        {events.length > 0 ? (
+          <div className="stack-list">
+            {events.map((event) => <EventCard key={event.id} event={event} />)}
+          </div>
+        ) : (
+          <div className="home-empty"><strong>예정된 행사가 없어요.</strong><span>새 행사가 등록되면 여기에서 알려드릴게요.</span></div>
+        )}
       </section>
     </div>
   )
