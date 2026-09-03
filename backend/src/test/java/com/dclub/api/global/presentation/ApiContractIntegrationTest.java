@@ -24,6 +24,20 @@ class ApiContractIntegrationTest {
     ObjectMapper objectMapper;
 
     @Test
+    void 현재_구현된_API의_Swagger_OpenAPI_명세를_제공한다() throws Exception {
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.info.title").value("동아리 행사·회비 관리 API"))
+                .andExpect(jsonPath("$.paths['/events'].get.summary").value("게시 행사 목록 조회"))
+                .andExpect(jsonPath("$.paths['/admin/events/{eventId}/participants'].get.summary")
+                        .value("행사별 참가자·납부 현황"))
+                .andExpect(jsonPath("$.components.securitySchemes.kakaoSession.in").value("cookie"));
+
+        mockMvc.perform(get("/swagger-ui/index.html"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     void 현재_운영진과_행사_상세를_조회한다() throws Exception {
         mockMvc.perform(get("/me"))
                 .andExpect(status().isOk())

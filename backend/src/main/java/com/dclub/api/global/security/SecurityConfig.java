@@ -28,7 +28,8 @@ public class SecurityConfig {
                         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                         .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler()))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/actuator/health", "/oauth2/**", "/login/**").permitAll()
+                        .requestMatchers("/actuator/health", "/oauth2/**", "/login/**",
+                                "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .anyRequest().authenticated())
                 .oauth2Login(oauth -> oauth
                         .userInfoEndpoint(userInfo -> userInfo.userService(kakaoOAuth2UserService))

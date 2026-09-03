@@ -23,6 +23,7 @@ compose.yaml            로컬 PostgreSQL
 - [통합 테스트 보고서](./docs/integration-test-report.md)
 - [운영 배포 가이드](./docs/deployment-guide.md)
 - [OpenAPI 계약](./contracts/openapi.yaml)
+- [실행 중인 Swagger/OpenAPI 사용 가이드](./docs/swagger-guide.md)
 
 ## 구현된 화면과 흐름
 

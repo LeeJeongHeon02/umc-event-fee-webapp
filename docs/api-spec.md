@@ -1,6 +1,6 @@
 # 교내 개발 동아리 행사·회비 관리 웹앱 API 명세서
 
-> 문서 상태: 초안 v0.1  
+> 문서 상태: 설계 초안 v0.1 — 현재 구현된 API의 실행 문서는 [Swagger/OpenAPI 사용 가이드](./swagger-guide.md)를 기준으로 한다.
 > API 스타일: REST/JSON  
 > 백엔드: Spring Boot 3 + Spring Security + Spring Data JPA  
 > 연관 문서: [서비스 기획서](./product-plan.md) · [ERD 설계서](./erd.md) · [OpenAPI 계약](../contracts/openapi.yaml)
