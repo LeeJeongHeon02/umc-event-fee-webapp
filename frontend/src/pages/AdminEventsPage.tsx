@@ -3,6 +3,8 @@ import { useState, type FormEvent } from 'react'
 import { ErrorState, LoadingState } from '../components/AsyncState'
 import { StatusBadge } from '../components/StatusBadge'
 import {
+  cancelAdminEvent,
+  closeAdminEvent,
   createAdminEvent,
   deleteAdminEvent,
   getAdminEvents,
@@ -112,6 +114,24 @@ export function AdminEventsPage() {
       await queryClient.invalidateQueries({ queryKey: ['admin'] })
     },
   })
+  const closeMutation = useMutation({
+    mutationFn: () => closeAdminEvent(selected!.id, selected!.version),
+    onSuccess: async (event) => {
+      setSelected(event)
+      setMessage('행사를 종료했습니다.')
+      await queryClient.invalidateQueries({ queryKey: ['admin'] })
+    },
+  })
+  const cancelMutation = useMutation({
+    mutationFn: () => cancelAdminEvent(selected!.id, selected!.version, '운영진 행사 취소'),
+    onSuccess: async () => {
+      setMessage('행사를 취소하고 납부 항목을 정리했습니다.')
+      const refreshed = await queryClient.fetchQuery({ queryKey: ['admin', 'events'], queryFn: getAdminEvents })
+      const event = refreshed.find((item) => item.id === selected!.id)
+      if (event) setSelected(event)
+      await queryClient.invalidateQueries({ queryKey: ['admin'] })
+    },
+  })
 
   const selectEvent = (event: AdminEventResponse) => {
     setSelected(event)
@@ -135,7 +155,7 @@ export function AdminEventsPage() {
   if (eventsQuery.isError) return <ErrorState />
 
   const isDraft = !selected || selected.status === 'DRAFT'
-  const mutationError = saveMutation.error ?? publishMutation.error ?? deleteMutation.error
+  const mutationError = saveMutation.error ?? publishMutation.error ?? deleteMutation.error ?? closeMutation.error ?? cancelMutation.error
 
   return (
     <div className="admin-page">
@@ -175,6 +195,8 @@ export function AdminEventsPage() {
           <div className="event-form-actions">
             {isDraft && <button className="primary-button" type="submit" disabled={saveMutation.isPending}>{saveMutation.isPending ? '저장 중…' : '초안 저장'}</button>}
             {selected?.status === 'DRAFT' && <button className="secondary-button" type="button" onClick={() => publishMutation.mutate()} disabled={publishMutation.isPending}>행사 공개</button>}
+            {selected?.status === 'PUBLISHED' && <button className="secondary-button" type="button" onClick={() => closeMutation.mutate()} disabled={closeMutation.isPending}>행사 종료</button>}
+            {selected && selected.status !== 'CANCELED' && <button className="danger-text-button" type="button" onClick={() => { if (window.confirm('행사를 취소하고 납부 상태를 정리할까요?')) cancelMutation.mutate() }} disabled={cancelMutation.isPending}>행사 취소</button>}
             {selected?.status === 'DRAFT' && !confirmingDelete && <button className="danger-text-button" type="button" onClick={() => setConfirmingDelete(true)}>초안 삭제</button>}
             {selected?.status === 'DRAFT' && confirmingDelete && (
               <>

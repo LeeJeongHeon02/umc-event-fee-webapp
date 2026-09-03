@@ -2,6 +2,8 @@ package com.dclub.api.global.security;
 
 import com.dclub.api.global.common.ApiException;
 import com.dclub.api.member.domain.Member;
+import com.dclub.api.member.domain.MemberRole;
+import com.dclub.api.member.domain.MemberStatus;
 import com.dclub.api.member.infrastructure.MemberRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -59,8 +61,22 @@ public class CurrentMemberProvider {
     }
 
     public Member requireStaff() {
-        Member member = current();
+        Member member = requireActive();
         if (!member.canManage()) throw ApiException.forbidden("운영진 권한이 필요합니다.");
+        return member;
+    }
+
+    public Member requireActive() {
+        Member member = current();
+        if (member.getStatus() != MemberStatus.ACTIVE) {
+            throw ApiException.forbidden("승인된 활동 회원만 이용할 수 있습니다.");
+        }
+        return member;
+    }
+
+    public Member requireAdmin() {
+        Member member = requireActive();
+        if (member.getRole() != MemberRole.ADMIN) throw ApiException.forbidden("최고 관리자 권한이 필요합니다.");
         return member;
     }
 }

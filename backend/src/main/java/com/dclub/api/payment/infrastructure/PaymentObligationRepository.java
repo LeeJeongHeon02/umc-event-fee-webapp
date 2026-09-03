@@ -13,6 +13,8 @@ public interface PaymentObligationRepository extends JpaRepository<PaymentObliga
     Optional<PaymentObligation> findByIdAndMemberId(Long id, Long memberId);
     Optional<PaymentObligation> findByMemberIdAndSourceTypeAndSourceId(Long memberId, PaymentSourceType sourceType, Long sourceId);
     List<PaymentObligation> findAllBySourceTypeAndSourceIdOrderByMemberIdAsc(PaymentSourceType sourceType, Long sourceId);
+    List<PaymentObligation> findAllByStatusOrderByUpdatedAtAsc(PaymentStatus status);
+    long countBySourceTypeAndSourceId(PaymentSourceType sourceType, Long sourceId);
     long countByStatus(PaymentStatus status);
     long countByStatusIn(Collection<PaymentStatus> statuses);
 }

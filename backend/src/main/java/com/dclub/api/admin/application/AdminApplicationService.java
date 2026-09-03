@@ -12,6 +12,8 @@ import com.dclub.api.event.infrastructure.*;
 import com.dclub.api.dues.infrastructure.*;
 import com.dclub.api.payment.infrastructure.*;
 import com.dclub.api.global.security.CurrentMemberProvider;
+import com.dclub.api.notification.domain.Notification;
+import com.dclub.api.notification.infrastructure.NotificationRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Clock;
@@ -30,6 +32,7 @@ public class AdminApplicationService {
     private final CurrentMemberProvider currentMemberProvider;
     private final ApiMapper mapper;
     private final Clock clock;
+    private final NotificationRepository notificationRepository;
 
     public AdminApplicationService(MemberRepository memberRepository, ClubEventRepository eventRepository,
                                    ParticipationRepository participationRepository,
@@ -37,6 +40,7 @@ public class AdminApplicationService {
                                    PaymentObligationRepository paymentRepository,
                                    PaymentReportRepository reportRepository,
                                    PaymentStatusHistoryRepository historyRepository,
+                                   NotificationRepository notificationRepository,
                                    CurrentMemberProvider currentMemberProvider, ApiMapper mapper, Clock clock) {
         this.memberRepository = memberRepository;
         this.eventRepository = eventRepository;
@@ -45,6 +49,7 @@ public class AdminApplicationService {
         this.paymentRepository = paymentRepository;
         this.reportRepository = reportRepository;
         this.historyRepository = historyRepository;
+        this.notificationRepository = notificationRepository;
         this.currentMemberProvider = currentMemberProvider;
         this.mapper = mapper;
         this.clock = clock;
@@ -118,7 +123,75 @@ public class AdminApplicationService {
         if (confirm) payment.confirm(now); else payment.reject(now);
         payment = paymentRepository.saveAndFlush(payment);
         historyRepository.save(new PaymentStatusHistory(payment.getId(), previous, payment.getStatus(), request.note(), now));
+        notificationRepository.save(new Notification(payment.getMemberId(),
+                confirm ? "납부가 확인됐어요" : "송금 신고를 다시 확인해 주세요",
+                payment.getSourceTitle(), "/payments/" + payment.getId(), now));
         return new AdminPaymentReviewResponse(payment.getId(), payment.getStatus(), payment.getVersion(), now);
+    }
+
+    @Transactional(readOnly = true)
+    public List<AdminPaymentRow> refunds() {
+        currentMemberProvider.requireStaff();
+        return paymentRepository.findAllByStatusOrderByUpdatedAtAsc(PaymentStatus.REFUND_PENDING).stream()
+                .map(this::paymentRow).toList();
+    }
+
+    @Transactional
+    public AdminPaymentReviewResponse completeRefund(long paymentId, AdminPaymentReviewRequest request) {
+        currentMemberProvider.requireStaff();
+        var payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() -> ApiException.notFound("납부 항목을 찾을 수 없습니다."));
+        if (payment.getVersion() != request.version()) {
+            throw ApiException.conflict("PAYMENT_STATE_CONFLICT", "납부 상태가 변경되었습니다. 새로고침 후 다시 시도해 주세요.");
+        }
+        PaymentStatus previous = payment.getStatus();
+        Instant now = Instant.now(clock);
+        payment.completeRefund(now);
+        payment = paymentRepository.saveAndFlush(payment);
+        historyRepository.save(new PaymentStatusHistory(payment.getId(), previous, payment.getStatus(), request.note(), now));
+        return new AdminPaymentReviewResponse(payment.getId(), payment.getStatus(), payment.getVersion(), now);
+    }
+
+    @Transactional(readOnly = true)
+    public List<AdminMemberResponse> members() {
+        currentMemberProvider.requireStaff();
+        return memberRepository.findAllByOrderByCreatedAtDesc().stream().map(this::memberResponse).toList();
+    }
+
+    @Transactional
+    public AdminMemberResponse approveMember(long memberId, AdminMemberActionRequest request) {
+        currentMemberProvider.requireAdmin();
+        Member member = findMember(memberId);
+        member.approve(request.version(), Instant.now(clock));
+        return memberResponse(memberRepository.saveAndFlush(member));
+    }
+
+    @Transactional
+    public AdminMemberResponse suspendMember(long memberId, AdminMemberActionRequest request) {
+        Member actor = currentMemberProvider.requireAdmin();
+        if (actor.getId().equals(memberId)) throw ApiException.conflict("SELF_STATUS_CHANGE", "자기 자신은 정지할 수 없습니다.");
+        Member member = findMember(memberId);
+        member.suspend(request.version(), Instant.now(clock));
+        return memberResponse(memberRepository.saveAndFlush(member));
+    }
+
+    @Transactional
+    public AdminMemberResponse changeMemberRole(long memberId, AdminMemberRoleRequest request) {
+        Member actor = currentMemberProvider.requireAdmin();
+        if (actor.getId().equals(memberId)) throw ApiException.conflict("SELF_ROLE_CHANGE", "자기 자신의 역할은 변경할 수 없습니다.");
+        Member member = findMember(memberId);
+        member.changeRole(request.role(), request.version(), Instant.now(clock));
+        return memberResponse(memberRepository.saveAndFlush(member));
+    }
+
+    private Member findMember(long memberId) {
+        return memberRepository.findById(memberId).orElseThrow(() -> ApiException.notFound("회원을 찾을 수 없습니다."));
+    }
+
+    private AdminMemberResponse memberResponse(Member member) {
+        return new AdminMemberResponse(member.getId(), member.getKakaoProfileName(), member.getName(), member.getPart(),
+                member.displayNickname(), member.getRole(), member.getStatus(), member.isOnboardingCompleted(),
+                member.getApprovedAt(), member.getCreatedAt(), member.getUpdatedAt(), member.getVersion());
     }
 
     private AdminEventSummary eventSummary(ClubEvent event) {

@@ -4,8 +4,9 @@ import { useCurrentMember } from '../hooks/useCurrentMember'
 const adminNavItems = [
   { to: '/admin', label: '대시보드', symbol: '▦', end: true },
   { to: '/admin/events', label: '행사 관리', symbol: '+' },
-  { to: '/admin/events/42/participants', label: '행사 참가자', symbol: '◎' },
-  { to: '/admin/fees/7/payments', label: '회비 납부', symbol: '₩' },
+  { to: '/admin/dues', label: '회비 관리', symbol: '₩' },
+  { to: '/admin/members', label: '회원 관리', symbol: '◎', adminOnly: true },
+  { to: '/admin/refunds', label: '환불 관리', symbol: '↺' },
 ]
 
 export function AdminShell() {
@@ -20,7 +21,7 @@ export function AdminShell() {
           <div><strong>Club</strong><small>운영진 센터</small></div>
         </NavLink>
         <nav className="admin-nav" aria-label="운영진 메뉴">
-          {adminNavItems.map((item) => (
+          {adminNavItems.filter((item) => !item.adminOnly || meQuery.data?.role === 'ADMIN').map((item) => (
             <NavLink key={item.to} to={item.to} end={item.end}>
               <span aria-hidden="true">{item.symbol}</span>
               {item.label}

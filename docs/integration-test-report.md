@@ -1,8 +1,8 @@
 # 프론트엔드·백엔드 통합 테스트 보고서
 
-> 기준 일자: 2026-09-02
-> 대상 브랜치: `feature/integration-hardening`
-> 환경: Windows, Java 17, Node.js 24.19.0, H2 인메모리 DB
+> 기준 일자: 2026-09-03
+> 대상 브랜치: `feature/mvp-completion`
+> 환경: Windows, Java 17, Node.js 24.19.0, H2 및 Docker PostgreSQL 16
 
 ## 1. 테스트 구성
 
@@ -24,22 +24,27 @@
 | 운영진 행사 초안 수정 | 성공, 버전 증가 |
 | 운영진 행사 공개 | 성공, `DRAFT → PUBLISHED` |
 | 일반 회원의 운영진 API 접근 | 성공적으로 차단, HTTP `403` |
+| 회비 차수 생성 및 활성 회원 일괄 부과 | 성공, 대상 5명 납부 항목 생성 |
+| 행사 취소 및 수동 환불 완료 | 성공, `CONFIRMED → REFUND_PENDING → REFUNDED` |
+| 공용 송금정보 새 버전 활성화 | 성공, 이전 버전 비활성 보존 |
 
 ## 3. 자동화 검증
 
 | 명령 | 결과 |
 |---|---|
-| `backend/gradlew.bat test --no-daemon` | 성공, PostgreSQL Testcontainers 포함 28건 |
-| `frontend/npm test` | 성공, 8건 |
+| `backend/gradlew.bat test` | 성공, PostgreSQL 16 Testcontainers를 포함해 35건 통과 |
+| `frontend/npm test` | 성공, 10건 |
 | `frontend/npm run typecheck` | 성공 |
-| Node 24.19.0 `vite build` | 성공, 439개 모듈 번들링 |
+| Node 24.19.0 `vite build` | 성공, 445개 모듈 번들링 |
 | `frontend/npm run test:e2e` | 성공, 실제 API 핵심 흐름 1건 |
+| 운영 Docker 이미지 빌드 | 프론트엔드·백엔드 모두 성공 |
+| 운영 Compose 기동 및 프록시 헬스체크 | PostgreSQL Flyway 적용, `/api/v1/actuator/health` 응답 `UP` |
 
 ## 4. 환경 제약과 남은 검증
 
 ### PostgreSQL Testcontainers
 
-`postgres:16-alpine` 컨테이너에서 Flyway V1 적용, Hibernate 스키마 검증, 행사 참가 유일 제약을 확인했다. Docker Desktop 29.5.3 엔진에서 테스트가 통과했다. Docker가 없는 개발 환경에서는 `disabledWithoutDocker = true` 조건에 따라 이 테스트만 건너뛴다.
+운영 Compose의 `postgres:16-alpine`에서 Flyway 적용과 Hibernate 스키마 검증을 확인했다. 로컬 Docker Desktop 연결 후 PostgreSQL 16 Testcontainers Repository 테스트도 통과했다. Docker가 없는 개발 환경에서는 `disabledWithoutDocker = true` 조건에 따라 이 테스트만 건너뛰며, GitHub Ubuntu runner에서도 Docker socket을 사용해 같은 테스트를 실행한다.
 
 ### 카카오 OAuth
 
@@ -64,4 +69,5 @@
 
 1. 카카오 테스트 앱으로 로그인 → 온보딩 → 세션 유지 확인
 2. 운영 프로필에서 CSRF 쿠키와 상태 변경 요청 확인
-3. CI에서 프론트 빌드, 백엔드 Testcontainers, Playwright E2E 순차 실행
+3. GitHub Actions 첫 실행에서 Testcontainers 및 Playwright 결과 확인
+4. 실제 모바일 브라우저에서 계좌·금액 복사와 카카오페이 링크 확인

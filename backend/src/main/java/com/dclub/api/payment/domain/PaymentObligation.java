@@ -94,6 +94,14 @@ public class PaymentObligation {
         updatedAt = now;
     }
 
+    public void completeRefund(Instant now) {
+        if (status != PaymentStatus.REFUND_PENDING) {
+            throw ApiException.conflict("PAYMENT_STATE_CONFLICT", "환불 대기 상태의 납부만 환불 완료할 수 있습니다.");
+        }
+        status = PaymentStatus.REFUNDED;
+        updatedAt = now;
+    }
+
     private void requireReported() {
         if (status != PaymentStatus.REPORTED) {
             throw ApiException.conflict("PAYMENT_STATE_CONFLICT", "확인 대기 상태의 납부만 처리할 수 있습니다.");

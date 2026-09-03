@@ -1,4 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
+import { getNotifications } from '../services/api'
 import { useCurrentMember } from '../hooks/useCurrentMember'
 
 const navItems = [
@@ -12,6 +14,7 @@ export function AppShell() {
   const canManage = meQuery.data?.role === 'STAFF' || meQuery.data?.role === 'ADMIN'
   const memberName = meQuery.data?.name ?? meQuery.data?.kakaoProfileName ?? '회원'
   const memberLabel = meQuery.data?.displayNickname ?? memberName
+  const notifications = useQuery({ queryKey: ['notifications'], queryFn: getNotifications, enabled: meQuery.data?.status === 'ACTIVE' })
 
   return (
     <div className="app-shell">
@@ -22,10 +25,10 @@ export function AppShell() {
         </NavLink>
         <div className="topbar__actions">
           {canManage && <NavLink className="admin-mode-link" to="/admin">운영진</NavLink>}
-          <button className="icon-button" type="button" aria-label="알림">
+          <NavLink className="icon-button" to="/notifications" aria-label={`알림 ${notifications.data?.unreadCount ?? 0}개`}>
             <span aria-hidden="true">●</span>
-            <span className="notification-dot" />
-          </button>
+            {(notifications.data?.unreadCount ?? 0) > 0 && <span className="notification-dot" />}
+          </NavLink>
           <div className="avatar" aria-label={memberLabel}>{memberName.slice(0, 1)}</div>
         </div>
       </header>

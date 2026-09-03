@@ -6,11 +6,13 @@ frontend/playwright-report/
 .env
 .env.*
 !.env.example
+!.env.production.example
 frontend/.env
 frontend/.env.*
 !frontend/.env.example
 backend/build/
 backend/.gradle/
+backend/.tmp/
 .idea/
 *.iml
 *.log

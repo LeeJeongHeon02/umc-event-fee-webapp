@@ -23,11 +23,16 @@ public class DemoDataInitializer implements ApplicationRunner {
         jdbc.update("""
             insert into members (id, kakao_id, kakao_profile_name, name, part, role, status, onboarding_completed, approved_at, created_at, updated_at, version)
             values
-            (1, 'dev-staff', '총무', '김총무', 'PE_WEB', 'STAFF', 'ACTIVE', true, current_timestamp, current_timestamp, current_timestamp, 0),
+            (1, 'dev-staff', '총무', '김총무', 'PE_WEB', 'ADMIN', 'ACTIVE', true, current_timestamp, current_timestamp, current_timestamp, 0),
             (2, 'dev-member-2', '민지', '김민지', 'DESIGN', 'MEMBER', 'ACTIVE', true, current_timestamp, current_timestamp, current_timestamp, 0),
             (3, 'dev-member-3', '수현', '이수현', 'PLAN', 'MEMBER', 'ACTIVE', true, current_timestamp, current_timestamp, current_timestamp, 0),
             (4, 'dev-member-4', '서준', '박서준', 'PE_MOBILE', 'MEMBER', 'ACTIVE', true, current_timestamp, current_timestamp, current_timestamp, 0),
             (5, 'dev-member-5', '유진', '최유진', 'PE_WEB', 'MEMBER', 'ACTIVE', true, current_timestamp, current_timestamp, current_timestamp, 0)
+            """);
+
+        jdbc.update("""
+            insert into payment_settings (bank_name, account_number, account_holder, kakao_pay_receive_url, active, created_by, created_at)
+            values ('카카오뱅크', '3333-12-3456789', '김총무', 'https://qr.kakaopay.com/example', true, 1, current_timestamp)
             """);
 
         jdbc.update("""

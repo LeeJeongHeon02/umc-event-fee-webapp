@@ -424,7 +424,7 @@ JPA에서는 `EnumType.STRING`을 사용하고 DB에서는 `VARCHAR + CHECK` 제
 | `MemberStatus` | `PENDING`, `ACTIVE`, `SUSPENDED`, `WITHDRAWN` |
 | `EventStatus` | `DRAFT`, `PUBLISHED`, `CLOSED`, `CANCELED` |
 | `ParticipationStatus` | `JOINED`, `CANCELED` |
-| `DuesRoundStatus` | `DRAFT`, `OPEN`, `CLOSED` |
+| `DuesRoundStatus` | `DRAFT`, `PUBLISHED`, `CLOSED` |
 | `PaymentType` | `EVENT_FEE`, `MEMBERSHIP_DUE` |
 | `PaymentStatus` | `NOT_REQUIRED`, `UNPAID`, `REPORTED`, `CONFIRMED`, `REJECTED`, `VOID`, `REFUND_PENDING`, `REFUNDED` |
 | `PaymentMethod` | `BANK_TRANSFER`, `KAKAO_PAY_CODE` |
@@ -527,7 +527,7 @@ CREATE UNIQUE INDEX uk_active_payment_setting
 
 ### 9.3 회비 회차 게시
 
-1. 회차를 `DRAFT`에서 `OPEN`으로 변경한다.
+1. 회차를 `DRAFT`에서 `PUBLISHED`로 변경한다.
 2. 대상 `ACTIVE` 회원을 확정한다.
 3. 대상 회원별 `MEMBERSHIP_DUE` 납부 항목을 일괄 생성한다.
 4. 개인별 면제자는 `NOT_REQUIRED`, 나머지는 `UNPAID`로 생성한다.

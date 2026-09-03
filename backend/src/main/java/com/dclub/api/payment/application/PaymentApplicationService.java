@@ -41,21 +41,21 @@ public class PaymentApplicationService {
 
     @Transactional(readOnly = true)
     public PageResponse<PaymentSummary> getMyPayments() {
-        Long memberId = currentMemberProvider.current().getId();
+        Long memberId = currentMemberProvider.requireActive().getId();
         return PageResponse.of(paymentRepository.findAllByMemberIdOrderByDueAtAsc(memberId).stream()
                 .map(mapper::payment).toList());
     }
 
     @Transactional(readOnly = true)
     public PaymentDetail getMyPayment(long paymentId) {
-        Long memberId = currentMemberProvider.current().getId();
+        Long memberId = currentMemberProvider.requireActive().getId();
         return mapper.paymentDetail(paymentRepository.findByIdAndMemberId(paymentId, memberId)
                 .orElseThrow(() -> ApiException.notFound("납부 항목을 찾을 수 없습니다.")));
     }
 
     @Transactional
     public PaymentReportResponse report(long paymentId, PaymentReportRequest request) {
-        Long memberId = currentMemberProvider.current().getId();
+        Long memberId = currentMemberProvider.requireActive().getId();
         var payment = paymentRepository.findByIdAndMemberId(paymentId, memberId)
                 .orElseThrow(() -> ApiException.notFound("납부 항목을 찾을 수 없습니다."));
         if (payment.getVersion() != request.version()) {

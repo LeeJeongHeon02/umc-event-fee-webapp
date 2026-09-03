@@ -21,6 +21,7 @@ compose.yaml            로컬 PostgreSQL
 - [API 명세서](./docs/api-spec.md)
 - [개발 계획서](./docs/development-plan.md)
 - [통합 테스트 보고서](./docs/integration-test-report.md)
+- [운영 배포 가이드](./docs/deployment-guide.md)
 - [OpenAPI 계약](./contracts/openapi.yaml)
 
 ## 구현된 화면과 흐름
@@ -33,6 +34,12 @@ compose.yaml            로컬 PostgreSQL
 - 사용자 송금 완료 신고와 `미납 → 확인 대기` 전환
 - 운영진 대시보드와 전체 수납률 요약
 - 운영진 행사 초안 생성·수정·삭제·공개
+- 운영진 행사 종료·취소와 환불 대기 전환
+- 회원 승인·정지·역할 변경
+- 회비 차수 생성·공개와 활성 회원 일괄 부과
+- 환불 대기 목록과 수동 환불 완료
+- 공용 송금정보 버전 등록·활성화
+- 행사·참가·회비·납부 결과의 앱 내부 알림
 - 행사별 참가 부원·참가비 납부 현황
 - 회비 차수별 부원 납부 내역
 - 이름·파트·납부 상태 검색 및 필터
@@ -79,6 +86,10 @@ Vite가 `/api` 요청을 `http://localhost:8080`으로 프록시합니다.
 - `/admin/events`: 행사 생성·수정·삭제·공개
 - `/admin/events/42/participants`: 행사 참가자·참가비 현황
 - `/admin/fees/7/payments`: 회비 납부 현황
+- `/admin/dues`: 회비 차수 관리
+- `/admin/members`: 회원 승인·권한 관리
+- `/admin/refunds`: 환불 완료 관리
+- `/admin/settings`: 공용 송금정보 설정(ADMIN)
 
 ## 검증
 
@@ -152,12 +163,8 @@ cd backend
 ./gradlew build
 ```
 
-현재 백엔드 테스트 28건이 통과합니다. 이 중 1건은 Docker 엔진에서 PostgreSQL 16 컨테이너를 실행해 Flyway와 데이터베이스 제약을 검증합니다. Docker가 꺼져 있으면 해당 테스트만 건너뜁니다.
+백엔드 자동화 테스트에는 PostgreSQL 16 Testcontainers 기반 Flyway·데이터베이스 제약 검증이 포함됩니다. Docker가 꺼져 있으면 해당 테스트만 건너뜁니다.
 
-## 다음 개발 순서
+## 운영 배포
 
-1. PostgreSQL Testcontainers를 CI에서도 필수 실행
-2. 카카오 개발자 앱 키·Redirect URI로 실제 테스트 계정 로그인 검증
-3. 운영진 행사 마감·취소 상태 전이 추가
-4. 회비 차수 생성과 대상자 부과 API 구현
-5. 환불 완료 처리와 감사 이력 조회 API 구현
+`backend/Dockerfile`, `frontend/Dockerfile`, `compose.prod.yaml`, `deploy/Caddyfile`이 준비되어 있습니다. 실제 도메인·카카오 앱 키·DB 비밀번호·최초 관리자 카카오 ID를 설정한 뒤 [운영 배포 가이드](./docs/deployment-guide.md)를 따릅니다.

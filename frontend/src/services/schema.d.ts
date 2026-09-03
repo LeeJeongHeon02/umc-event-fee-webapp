@@ -208,6 +208,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 내 알림 목록과 읽지 않은 개수 조회 */
+        get: operations["getNotifications"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/notifications/{notificationId}/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** 알림 읽음 처리 */
+        post: operations["readNotification"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/notifications/read-all": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** 모든 알림 읽음 처리 */
+        post: operations["readAllNotifications"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/events": {
         parameters: {
             query?: never;
@@ -262,6 +313,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/events/{eventId}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** 공개 행사 종료 */
+        post: operations["closeAdminEvent"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/events/{eventId}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** 행사 취소 및 납부 상태 정리 */
+        post: operations["cancelAdminEvent"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/events/{eventId}/participants": {
         parameters: {
             query?: never;
@@ -296,6 +381,59 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/dues-rounds": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 회비 차수 목록 조회 */
+        get: operations["getAdminDuesRounds"];
+        put?: never;
+        /** 회비 차수 초안 생성 */
+        post: operations["createAdminDuesRound"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/dues-rounds/{duesRoundId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** 회비 차수 초안 삭제 */
+        delete: operations["deleteAdminDuesRound"];
+        options?: never;
+        head?: never;
+        /** 회비 차수 초안 수정 */
+        patch: operations["updateAdminDuesRound"];
+        trace?: never;
+    };
+    "/admin/dues-rounds/{duesRoundId}/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** 회비 차수 공개 및 활성 부원 납부 항목 생성 */
+        post: operations["publishAdminDuesRound"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/payment-obligations/{paymentId}/confirm": {
         parameters: {
             query?: never;
@@ -324,6 +462,143 @@ export interface paths {
         put?: never;
         /** 송금 신고 반려 */
         post: operations["rejectAdminPayment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/refunds": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 환불 대기 목록 조회 */
+        get: operations["getAdminRefunds"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/payment-obligations/{paymentId}/refund": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** 환불 완료 처리 */
+        post: operations["completeAdminRefund"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/members": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 회원 목록 조회 */
+        get: operations["getAdminMembers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/members/{memberId}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** 가입 대기 회원 승인 */
+        post: operations["approveAdminMember"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/members/{memberId}/suspend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** 활성 회원 정지 */
+        post: operations["suspendAdminMember"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/members/{memberId}/role": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** 활성 회원 역할 변경 */
+        patch: operations["changeAdminMemberRole"];
+        trace?: never;
+    };
+    "/admin/payment-settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 송금정보 버전 목록 */
+        get: operations["getAdminPaymentSettings"];
+        put?: never;
+        /** 새 송금정보 등록 및 활성화 */
+        post: operations["createAdminPaymentSetting"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/payment-settings/active": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 현재 활성 송금정보 조회 */
+        get: operations["getActiveAdminPaymentSetting"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -534,6 +809,20 @@ export interface components {
             /** Format: int64 */
             version: number;
         };
+        AdminEventTransitionRequest: {
+            /** Format: int64 */
+            version: number;
+            reason?: string;
+        };
+        AdminEventCancelResponse: {
+            eventStatus: components["schemas"]["EventStatus"];
+            /** Format: int64 */
+            voidedPaymentCount: number;
+            /** Format: int64 */
+            refundPendingCount: number;
+            /** Format: int64 */
+            version: number;
+        };
         AdminEventResponse: {
             /** Format: int64 */
             id: number;
@@ -606,6 +895,48 @@ export interface components {
             /** Format: int64 */
             confirmedAmount: number;
         };
+        /** @enum {string} */
+        AdminDuesRoundStatus: "DRAFT" | "PUBLISHED" | "CLOSED";
+        AdminDuesRoundRequest: {
+            title: string;
+            /** Format: int64 */
+            amount: number;
+            /** Format: date-time */
+            dueAt: string;
+            bankName?: string;
+            accountNumber?: string;
+            accountHolder?: string;
+            kakaoPayReceiveUrl?: string;
+            /** Format: int64 */
+            version: number;
+        };
+        AdminDuesRoundResponse: {
+            /** Format: int64 */
+            id: number;
+            title: string;
+            /** Format: int64 */
+            amount: number;
+            /** Format: date-time */
+            dueAt: string;
+            status: components["schemas"]["AdminDuesRoundStatus"];
+            bankName?: string;
+            accountNumber?: string;
+            accountHolder?: string;
+            kakaoPayReceiveUrl?: string;
+            /** Format: int64 */
+            targetCount: number;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+            /** Format: int64 */
+            version: number;
+        };
+        AdminDuesPublishResponse: {
+            duesRound: components["schemas"]["AdminDuesRoundResponse"];
+            /** Format: int64 */
+            createdPaymentCount: number;
+        };
         AdminPaymentRow: {
             /** Format: int64 */
             paymentId: number;
@@ -671,6 +1002,69 @@ export interface components {
             version: number;
             /** Format: date-time */
             reviewedAt: string;
+        };
+        AdminMemberResponse: {
+            /** Format: int64 */
+            id: number;
+            kakaoProfileName: string;
+            name?: string;
+            part?: components["schemas"]["MemberPart"];
+            displayNickname: string;
+            role: components["schemas"]["MemberRole"];
+            status: components["schemas"]["MemberStatus"];
+            onboardingCompleted: boolean;
+            /** Format: date-time */
+            approvedAt?: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+            /** Format: int64 */
+            version: number;
+        };
+        AdminMemberActionRequest: {
+            /** Format: int64 */
+            version: number;
+        };
+        AdminMemberRoleRequest: {
+            role: components["schemas"]["MemberRole"];
+            /** Format: int64 */
+            version: number;
+        };
+        PaymentSettingRequest: {
+            bankName: string;
+            accountNumber: string;
+            accountHolder: string;
+            kakaoPayReceiveUrl?: string;
+        };
+        PaymentSettingResponse: {
+            /** Format: int64 */
+            id: number;
+            bankName: string;
+            accountNumber: string;
+            accountHolder: string;
+            kakaoPayReceiveUrl?: string;
+            active: boolean;
+            /** Format: int64 */
+            createdBy: number;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        NotificationItem: {
+            /** Format: int64 */
+            id: number;
+            title: string;
+            body: string;
+            linkUrl?: string;
+            /** Format: date-time */
+            readAt?: string;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        NotificationResponse: {
+            items: components["schemas"]["NotificationItem"][];
+            /** Format: int64 */
+            unreadCount: number;
         };
         Problem: {
             type?: string;
@@ -738,6 +1132,8 @@ export interface components {
         EventId: number;
         PaymentId: number;
         DuesRoundId: number;
+        MemberId: number;
+        NotificationId: number;
         Page: number;
         Size: number;
     };
@@ -1032,6 +1428,66 @@ export interface operations {
             403: components["responses"]["Forbidden"];
         };
     };
+    getNotifications: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 내 알림 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationResponse"];
+                };
+            };
+        };
+    };
+    readNotification: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                notificationId: components["parameters"]["NotificationId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 읽은 알림 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationItem"];
+                };
+            };
+        };
+    };
+    readAllNotifications: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 처리 완료 */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     getAdminEvents: {
         parameters: {
             query?: never;
@@ -1179,6 +1635,60 @@ export interface operations {
             409: components["responses"]["Conflict"];
         };
     };
+    closeAdminEvent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: components["parameters"]["EventId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminEventTransitionRequest"];
+            };
+        };
+        responses: {
+            /** @description 종료된 행사 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminEventResponse"];
+                };
+            };
+            409: components["responses"]["Conflict"];
+        };
+    };
+    cancelAdminEvent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: components["parameters"]["EventId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminEventTransitionRequest"];
+            };
+        };
+        responses: {
+            /** @description 행사 취소 결과 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminEventCancelResponse"];
+                };
+            };
+            409: components["responses"]["Conflict"];
+        };
+    };
     getAdminEventParticipants: {
         parameters: {
             query?: {
@@ -1235,6 +1745,124 @@ export interface operations {
             404: components["responses"]["NotFound"];
         };
     };
+    getAdminDuesRounds: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 회비 차수 목록 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminDuesRoundResponse"][];
+                };
+            };
+        };
+    };
+    createAdminDuesRound: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminDuesRoundRequest"];
+            };
+        };
+        responses: {
+            /** @description 생성된 회비 차수 */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminDuesRoundResponse"];
+                };
+            };
+        };
+    };
+    deleteAdminDuesRound: {
+        parameters: {
+            query: {
+                version: number;
+            };
+            header?: never;
+            path: {
+                duesRoundId: components["parameters"]["DuesRoundId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 삭제 완료 */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    updateAdminDuesRound: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                duesRoundId: components["parameters"]["DuesRoundId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminDuesRoundRequest"];
+            };
+        };
+        responses: {
+            /** @description 수정된 회비 차수 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminDuesRoundResponse"];
+                };
+            };
+        };
+    };
+    publishAdminDuesRound: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                duesRoundId: components["parameters"]["DuesRoundId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminEventVersionRequest"];
+            };
+        };
+        responses: {
+            /** @description 공개 결과 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminDuesPublishResponse"];
+                };
+            };
+        };
+    };
     confirmAdminPayment: {
         parameters: {
             query?: never;
@@ -1289,6 +1917,214 @@ export interface operations {
             };
             403: components["responses"]["Forbidden"];
             409: components["responses"]["Conflict"];
+        };
+    };
+    getAdminRefunds: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 환불 대기 목록 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminPaymentRow"][];
+                };
+            };
+        };
+    };
+    completeAdminRefund: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                paymentId: components["parameters"]["PaymentId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminPaymentReviewRequest"];
+            };
+        };
+        responses: {
+            /** @description 환불 완료 상태 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminPaymentReviewResponse"];
+                };
+            };
+        };
+    };
+    getAdminMembers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 회원 목록 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminMemberResponse"][];
+                };
+            };
+        };
+    };
+    approveAdminMember: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                memberId: components["parameters"]["MemberId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminMemberActionRequest"];
+            };
+        };
+        responses: {
+            /** @description 승인된 회원 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminMemberResponse"];
+                };
+            };
+        };
+    };
+    suspendAdminMember: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                memberId: components["parameters"]["MemberId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminMemberActionRequest"];
+            };
+        };
+        responses: {
+            /** @description 정지된 회원 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminMemberResponse"];
+                };
+            };
+        };
+    };
+    changeAdminMemberRole: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                memberId: components["parameters"]["MemberId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminMemberRoleRequest"];
+            };
+        };
+        responses: {
+            /** @description 역할이 변경된 회원 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminMemberResponse"];
+                };
+            };
+        };
+    };
+    getAdminPaymentSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 송금정보 버전 목록 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentSettingResponse"][];
+                };
+            };
+        };
+    };
+    createAdminPaymentSetting: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PaymentSettingRequest"];
+            };
+        };
+        responses: {
+            /** @description 활성화된 송금정보 */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentSettingResponse"];
+                };
+            };
+        };
+    };
+    getActiveAdminPaymentSetting: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 현재 활성 송금정보 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentSettingResponse"];
+                };
+            };
         };
     };
 }

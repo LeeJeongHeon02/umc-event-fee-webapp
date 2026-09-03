@@ -7,4 +7,5 @@ import java.util.List;
 
 public interface DuesRoundRepository extends JpaRepository<DuesRound, Long> {
     List<DuesRound> findAllByStatusOrderByDueAtAsc(DuesRoundStatus status);
+    List<DuesRound> findAllByOrderByCreatedAtDesc();
 }

@@ -53,6 +53,18 @@ public final class ApiDtos {
     public record PaymentDestination(String bankName, String accountNumber, String accountHolder,
                                      String kakaoPayReceiveUrl) {}
 
+    public record PaymentSettingRequest(@NotBlank @Size(max = 100) String bankName,
+                                        @NotBlank @Size(max = 100) String accountNumber,
+                                        @NotBlank @Size(max = 100) String accountHolder,
+                                        @Size(max = 500) String kakaoPayReceiveUrl) {}
+
+    public record PaymentSettingResponse(Long id, String bankName, String accountNumber, String accountHolder,
+                                         String kakaoPayReceiveUrl, boolean active, Long createdBy, Instant createdAt) {}
+
+    public record NotificationItem(Long id, String title, String body, String linkUrl,
+                                   Instant readAt, Instant createdAt) {}
+    public record NotificationResponse(List<NotificationItem> items, long unreadCount) {}
+
     public record PaymentReportResponseItem(Long id, PaymentMethod method, String senderName,
                                             Instant transferredAt, String note, Instant reportedAt) {}
 
@@ -102,6 +114,11 @@ public final class ApiDtos {
 
     public record AdminEventVersionRequest(@PositiveOrZero long version) {}
 
+    public record AdminEventTransitionRequest(@PositiveOrZero long version, @Size(max = 500) String reason) {}
+
+    public record AdminEventCancelResponse(EventStatus eventStatus, long voidedPaymentCount,
+                                           long refundPendingCount, long version) {}
+
     public record AdminEventResponse(Long id, String title, String summary, String description, String location,
                                      Instant startsAt, Instant endsAt, Instant registrationDeadline,
                                      Integer capacity, long joinedCount, long feeAmount, EventStatus status,
@@ -111,6 +128,22 @@ public final class ApiDtos {
     public record AdminDuesRoundSummary(Long id, String title, long amount, Instant dueAt, long targetCount,
                                         long unpaidCount, long reportedCount, long confirmedCount,
                                         long confirmedAmount) {}
+
+    public record AdminDuesRoundRequest(@NotBlank @Size(max = 200) String title,
+                                        @PositiveOrZero long amount,
+                                        @NotNull Instant dueAt,
+                                        @Size(max = 100) String bankName,
+                                        @Size(max = 100) String accountNumber,
+                                        @Size(max = 100) String accountHolder,
+                                        @Size(max = 500) String kakaoPayReceiveUrl,
+                                        @PositiveOrZero long version) {}
+
+    public record AdminDuesRoundResponse(Long id, String title, long amount, Instant dueAt,
+                                         DuesRoundStatus status, String bankName, String accountNumber,
+                                         String accountHolder, String kakaoPayReceiveUrl,
+                                         long targetCount, Instant createdAt, Instant updatedAt, long version) {}
+
+    public record AdminDuesPublishResponse(AdminDuesRoundResponse duesRound, long createdPaymentCount) {}
 
     public record AdminPaymentRow(Long paymentId, Long memberId, String nickname, String name, MemberPart part,
                                   long amount, PaymentStatus status, Instant dueAt,
@@ -137,4 +170,13 @@ public final class ApiDtos {
     public record AdminPaymentReviewRequest(@NotNull @PositiveOrZero Long version, @Size(max = 500) String note) {}
 
     public record AdminPaymentReviewResponse(Long paymentId, PaymentStatus status, long version, Instant reviewedAt) {}
+
+    public record AdminMemberResponse(Long id, String kakaoProfileName, String name, MemberPart part,
+                                      String displayNickname, MemberRole role, MemberStatus status,
+                                      boolean onboardingCompleted, Instant approvedAt, Instant createdAt,
+                                      Instant updatedAt, long version) {}
+
+    public record AdminMemberActionRequest(@PositiveOrZero long version) {}
+
+    public record AdminMemberRoleRequest(@NotNull MemberRole role, @PositiveOrZero long version) {}
 }

@@ -8,6 +8,7 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
@@ -19,10 +20,13 @@ import java.util.Map;
 public class KakaoOAuth2UserService extends DefaultOAuth2UserService {
     private final MemberRepository memberRepository;
     private final Clock clock;
+    private final String bootstrapAdminKakaoId;
 
-    public KakaoOAuth2UserService(MemberRepository memberRepository, Clock clock) {
+    public KakaoOAuth2UserService(MemberRepository memberRepository, Clock clock,
+                                  @Value("${app.auth.bootstrap-admin-kakao-id:}") String bootstrapAdminKakaoId) {
         this.memberRepository = memberRepository;
         this.clock = clock;
+        this.bootstrapAdminKakaoId = bootstrapAdminKakaoId;
     }
 
     @Override
@@ -43,8 +47,13 @@ public class KakaoOAuth2UserService extends DefaultOAuth2UserService {
             throw new OAuth2AuthenticationException("Kakao user id is missing");
         }
         return memberRepository.findByKakaoId(kakaoId)
-                .orElseGet(() -> memberRepository.save(
-                        Member.pendingKakaoMember(kakaoId, normalizeProfileName(profileName), Instant.now(clock))));
+                .map(member -> {
+                    if (bootstrapAdminKakaoId.equals(kakaoId)) member.promoteBootstrapAdmin(Instant.now(clock));
+                    return member;
+                })
+                .orElseGet(() -> memberRepository.save(bootstrapAdminKakaoId.equals(kakaoId)
+                        ? Member.bootstrapAdmin(kakaoId, normalizeProfileName(profileName), Instant.now(clock))
+                        : Member.pendingKakaoMember(kakaoId, normalizeProfileName(profileName), Instant.now(clock))));
     }
 
     private String extractNickname(Map<String, Object> attributes) {

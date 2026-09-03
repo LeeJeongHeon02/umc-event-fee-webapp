@@ -12,6 +12,7 @@ import com.dclub.api.event.infrastructure.*;
 import com.dclub.api.dues.infrastructure.*;
 import com.dclub.api.payment.infrastructure.*;
 import com.dclub.api.global.security.CurrentMemberProvider;
+import com.dclub.api.notification.infrastructure.NotificationRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Clock;
@@ -24,19 +25,25 @@ public class EventApplicationService {
     private final ParticipationRepository participationRepository;
     private final PaymentObligationRepository paymentRepository;
     private final PaymentStatusHistoryRepository historyRepository;
+    private final PaymentSettingRepository paymentSettingRepository;
     private final CurrentMemberProvider currentMemberProvider;
     private final ApiMapper mapper;
     private final Clock clock;
+    private final NotificationRepository notificationRepository;
 
     public EventApplicationService(ClubEventRepository eventRepository,
                                    ParticipationRepository participationRepository,
                                    PaymentObligationRepository paymentRepository,
                                    PaymentStatusHistoryRepository historyRepository,
+                                   PaymentSettingRepository paymentSettingRepository,
+                                   NotificationRepository notificationRepository,
                                    CurrentMemberProvider currentMemberProvider, ApiMapper mapper, Clock clock) {
         this.eventRepository = eventRepository;
         this.participationRepository = participationRepository;
         this.paymentRepository = paymentRepository;
         this.historyRepository = historyRepository;
+        this.paymentSettingRepository = paymentSettingRepository;
+        this.notificationRepository = notificationRepository;
         this.currentMemberProvider = currentMemberProvider;
         this.mapper = mapper;
         this.clock = clock;
@@ -44,7 +51,7 @@ public class EventApplicationService {
 
     @Transactional(readOnly = true)
     public PageResponse<EventListItem> getEvents() {
-        Long memberId = currentMemberProvider.current().getId();
+        Long memberId = currentMemberProvider.requireActive().getId();
         List<EventListItem> items = eventRepository.findAllByStatusOrderByStartsAtAsc(EventStatus.PUBLISHED).stream()
                 .map(event -> listItem(event, memberId)).toList();
         return PageResponse.of(items);
@@ -52,7 +59,7 @@ public class EventApplicationService {
 
     @Transactional(readOnly = true)
     public EventDetail getEvent(long eventId) {
-        var member = currentMemberProvider.current();
+        var member = currentMemberProvider.requireActive();
         var event = findEvent(eventId);
         var participation = participationRepository.findByEventIdAndMemberId(eventId, member.getId()).orElse(null);
         var payment = paymentRepository.findByMemberIdAndSourceTypeAndSourceId(member.getId(), PaymentSourceType.EVENT, eventId).orElse(null);
@@ -72,7 +79,7 @@ public class EventApplicationService {
 
     @Transactional
     public JoinEventResponse join(long eventId) {
-        var member = currentMemberProvider.current();
+        var member = currentMemberProvider.requireActive();
         var event = findEvent(eventId);
         if (participationRepository.findByEventIdAndMemberId(eventId, member.getId()).isPresent()) {
             throw ApiException.conflict("ALREADY_PARTICIPATING", "이미 참가 신청한 행사입니다.");
@@ -82,15 +89,22 @@ public class EventApplicationService {
         var participation = participationRepository.save(new Participation(eventId, member.getId(), now));
         var payment = new PaymentObligation(member.getId(), PaymentType.EVENT_FEE, event.getFeeAmount(),
                 PaymentSourceType.EVENT, eventId, event.getTitle(), event.getRegistrationDeadline(), now);
-        payment.setDestination("카카오뱅크", "3333-12-3456789", "김총무", "https://qr.kakaopay.com/example");
+        if (event.getFeeAmount() > 0) {
+            var setting = paymentSettingRepository.findFirstByActiveTrueOrderByCreatedAtDesc()
+                    .orElseThrow(() -> ApiException.conflict("ACTIVE_PAYMENT_SETTING_REQUIRED", "유료 행사에 사용할 활성 송금정보가 없습니다."));
+            payment.setDestination(setting.getBankName(), setting.getAccountNumber(), setting.getAccountHolder(),
+                    setting.getKakaoPayReceiveUrl());
+        }
         payment = paymentRepository.save(payment);
         historyRepository.save(new PaymentStatusHistory(payment.getId(), null, payment.getStatus(), null, now));
+        notificationRepository.save(new com.dclub.api.notification.domain.Notification(member.getId(),
+                "참가 신청이 완료됐어요", event.getTitle(), "/events/" + eventId, now));
         return new JoinEventResponse(mapper.participation(participation), mapper.payment(payment));
     }
 
     @Transactional
     public CancelParticipationResponse cancel(long eventId, CancelParticipationRequest request) {
-        var member = currentMemberProvider.current();
+        var member = currentMemberProvider.requireActive();
         var event = findEvent(eventId);
         var participation = participationRepository.findByEventIdAndMemberId(eventId, member.getId())
                 .orElseThrow(() -> ApiException.notFound("참가 신청을 찾을 수 없습니다."));

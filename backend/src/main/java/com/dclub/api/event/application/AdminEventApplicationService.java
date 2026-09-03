@@ -8,6 +8,15 @@ import com.dclub.api.event.infrastructure.ClubEventRepository;
 import com.dclub.api.event.infrastructure.ParticipationRepository;
 import com.dclub.api.global.security.CurrentMemberProvider;
 import com.dclub.api.global.presentation.ApiDtos.*;
+import com.dclub.api.payment.domain.PaymentStatus;
+import com.dclub.api.payment.domain.PaymentStatusHistory;
+import com.dclub.api.payment.domain.PaymentSourceType;
+import com.dclub.api.payment.infrastructure.PaymentObligationRepository;
+import com.dclub.api.payment.infrastructure.PaymentStatusHistoryRepository;
+import com.dclub.api.member.domain.MemberStatus;
+import com.dclub.api.member.infrastructure.MemberRepository;
+import com.dclub.api.notification.domain.Notification;
+import com.dclub.api.notification.infrastructure.NotificationRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,14 +29,26 @@ public class AdminEventApplicationService {
     private final ClubEventRepository eventRepository;
     private final ParticipationRepository participationRepository;
     private final CurrentMemberProvider currentMemberProvider;
+    private final PaymentObligationRepository paymentRepository;
+    private final PaymentStatusHistoryRepository historyRepository;
     private final Clock clock;
+    private final MemberRepository memberRepository;
+    private final NotificationRepository notificationRepository;
 
     public AdminEventApplicationService(ClubEventRepository eventRepository,
                                         ParticipationRepository participationRepository,
+                                        PaymentObligationRepository paymentRepository,
+                                        PaymentStatusHistoryRepository historyRepository,
+                                        MemberRepository memberRepository,
+                                        NotificationRepository notificationRepository,
                                         CurrentMemberProvider currentMemberProvider,
                                         Clock clock) {
         this.eventRepository = eventRepository;
         this.participationRepository = participationRepository;
+        this.paymentRepository = paymentRepository;
+        this.historyRepository = historyRepository;
+        this.memberRepository = memberRepository;
+        this.notificationRepository = notificationRepository;
         this.currentMemberProvider = currentMemberProvider;
         this.clock = clock;
     }
@@ -71,7 +92,43 @@ public class AdminEventApplicationService {
         currentMemberProvider.requireStaff();
         ClubEvent event = findEvent(eventId);
         event.publish(request.version(), Instant.now(clock));
+        event = eventRepository.saveAndFlush(event);
+        Instant now = Instant.now(clock);
+        ClubEvent published = event;
+        notificationRepository.saveAll(memberRepository.findAllByStatusOrderByCreatedAtAsc(MemberStatus.ACTIVE).stream()
+                .map(member -> new Notification(member.getId(), "새 행사가 공개됐어요", published.getTitle(),
+                        "/events/" + published.getId(), now)).toList());
+        return response(event);
+    }
+
+    @Transactional
+    public AdminEventResponse close(long eventId, AdminEventTransitionRequest request) {
+        currentMemberProvider.requireStaff();
+        ClubEvent event = findEvent(eventId);
+        event.close(request.version(), Instant.now(clock));
         return response(eventRepository.saveAndFlush(event));
+    }
+
+    @Transactional
+    public AdminEventCancelResponse cancel(long eventId, AdminEventTransitionRequest request) {
+        currentMemberProvider.requireStaff();
+        Instant now = Instant.now(clock);
+        ClubEvent event = findEvent(eventId);
+        event.cancel(request.version(), now);
+        long voided = 0;
+        long refundPending = 0;
+        var payments = paymentRepository.findAllBySourceTypeAndSourceIdOrderByMemberIdAsc(PaymentSourceType.EVENT, eventId);
+        for (var payment : payments) {
+            PaymentStatus previous = payment.getStatus();
+            payment.cancelForEvent(now);
+            if (payment.getStatus() == PaymentStatus.REFUND_PENDING) refundPending++;
+            else if (payment.getStatus() == PaymentStatus.VOID) voided++;
+            historyRepository.save(new PaymentStatusHistory(payment.getId(), previous, payment.getStatus(),
+                    request.reason(), now));
+        }
+        paymentRepository.saveAll(payments);
+        event = eventRepository.saveAndFlush(event);
+        return new AdminEventCancelResponse(event.getStatus(), voided, refundPending, event.getVersion());
     }
 
     @Transactional

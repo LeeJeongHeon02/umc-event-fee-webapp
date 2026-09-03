@@ -1,0 +1,67 @@
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMAIN: ${DOMAIN}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - frontend
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    restart: unless-stopped
+    expose:
+      - "80"
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: backend
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_URL: jdbc:postgresql://db:5432/dclub
+      DB_USERNAME: dclub
+      DB_PASSWORD: ${DB_PASSWORD}
+      FRONTEND_BASE_URL: ${PUBLIC_BASE_URL}
+      KAKAO_CLIENT_ID: ${KAKAO_CLIENT_ID}
+      KAKAO_CLIENT_SECRET: ${KAKAO_CLIENT_SECRET:-}
+      BOOTSTRAP_ADMIN_KAKAO_ID: ${BOOTSTRAP_ADMIN_KAKAO_ID}
+      JAVA_TOOL_OPTIONS: -Xms128m -Xmx768m
+      SERVER_FORWARD_HEADERS_STRATEGY: framework
+      SERVER_SERVLET_SESSION_COOKIE_SECURE: "true"
+      SERVER_SERVLET_SESSION_COOKIE_SAME_SITE: lax
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: dclub
+      POSTGRES_USER: dclub
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - dclub-prod-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dclub -d dclub"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  dclub-prod-postgres:
+  caddy-data:
+  caddy-config:

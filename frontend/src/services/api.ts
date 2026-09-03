@@ -3,12 +3,21 @@ import type { paths } from './schema'
 import type {
   AdminDashboardResponse,
   AdminDuesPaymentPage,
+  AdminDuesRoundRequest,
+  AdminDuesRoundResponse,
+  AdminDuesPublishResponse,
   AdminEventParticipantPage,
   AdminEventCreateRequest,
   AdminEventUpdateRequest,
   AdminEventResponse,
   AdminPaymentReviewRequest,
   AdminPaymentReviewResponse,
+  AdminMemberResponse,
+  MemberRole,
+  AdminPaymentRow,
+  PaymentSettingRequest,
+  PaymentSettingResponse,
+  NotificationResponse,
   CancelParticipationRequest,
   CancelParticipationResponse,
   EventDetail,
@@ -180,6 +189,21 @@ export async function publishAdminEvent(eventId: number, version: number): Promi
   return data
 }
 
+export async function closeAdminEvent(eventId: number, version: number): Promise<AdminEventResponse> {
+  const { data, error, response } = await client.POST('/admin/events/{eventId}/close', {
+    params: { path: { eventId } }, body: { version },
+  })
+  if (!data) throwApiError(error, response)
+  return data
+}
+
+export async function cancelAdminEvent(eventId: number, version: number, reason: string): Promise<void> {
+  const { data, error, response } = await client.POST('/admin/events/{eventId}/cancel', {
+    params: { path: { eventId } }, body: { version, reason },
+  })
+  if (!data) throwApiError(error, response)
+}
+
 export async function deleteAdminEvent(eventId: number, version: number): Promise<void> {
   const { error, response } = await client.DELETE('/admin/events/{eventId}', {
     params: { path: { eventId }, query: { version } },
@@ -201,6 +225,107 @@ export async function getAdminDuesPayments(duesRoundId: number): Promise<AdminDu
   })
   if (!data) throwApiError(error, response)
   return data
+}
+
+export async function getAdminDuesRounds(): Promise<AdminDuesRoundResponse[]> {
+  const { data, error, response } = await client.GET('/admin/dues-rounds')
+  if (!data) throwApiError(error, response)
+  return data
+}
+
+export async function createAdminDuesRound(input: AdminDuesRoundRequest): Promise<AdminDuesRoundResponse> {
+  const { data, error, response } = await client.POST('/admin/dues-rounds', { body: input })
+  if (!data) throwApiError(error, response)
+  return data
+}
+
+export async function publishAdminDuesRound(id: number, version: number): Promise<AdminDuesPublishResponse> {
+  const { data, error, response } = await client.POST('/admin/dues-rounds/{duesRoundId}/publish', {
+    params: { path: { duesRoundId: id } }, body: { version },
+  })
+  if (!data) throwApiError(error, response)
+  return data
+}
+
+export async function deleteAdminDuesRound(id: number, version: number): Promise<void> {
+  const { error, response } = await client.DELETE('/admin/dues-rounds/{duesRoundId}', {
+    params: { path: { duesRoundId: id }, query: { version } },
+  })
+  if (!response.ok) throwApiError(error, response)
+}
+
+export async function getAdminMembers(): Promise<AdminMemberResponse[]> {
+  const { data, error, response } = await client.GET('/admin/members')
+  if (!data) throwApiError(error, response)
+  return data
+}
+
+export async function approveAdminMember(id: number, version: number): Promise<AdminMemberResponse> {
+  const { data, error, response } = await client.POST('/admin/members/{memberId}/approve', {
+    params: { path: { memberId: id } }, body: { version },
+  })
+  if (!data) throwApiError(error, response)
+  return data
+}
+
+export async function suspendAdminMember(id: number, version: number): Promise<AdminMemberResponse> {
+  const { data, error, response } = await client.POST('/admin/members/{memberId}/suspend', {
+    params: { path: { memberId: id } }, body: { version },
+  })
+  if (!data) throwApiError(error, response)
+  return data
+}
+
+export async function changeAdminMemberRole(id: number, role: MemberRole, version: number): Promise<AdminMemberResponse> {
+  const { data, error, response } = await client.PATCH('/admin/members/{memberId}/role', {
+    params: { path: { memberId: id } }, body: { role, version },
+  })
+  if (!data) throwApiError(error, response)
+  return data
+}
+
+export async function getAdminRefunds(): Promise<AdminPaymentRow[]> {
+  const { data, error, response } = await client.GET('/admin/refunds')
+  if (!data) throwApiError(error, response)
+  return data
+}
+
+export async function completeAdminRefund(paymentId: number, version: number, note: string): Promise<AdminPaymentReviewResponse> {
+  const { data, error, response } = await client.POST('/admin/payment-obligations/{paymentId}/refund', {
+    params: { path: { paymentId } }, body: { version, note },
+  })
+  if (!data) throwApiError(error, response)
+  return data
+}
+
+export async function getAdminPaymentSettings(): Promise<PaymentSettingResponse[]> {
+  const { data, error, response } = await client.GET('/admin/payment-settings')
+  if (!data) throwApiError(error, response)
+  return data
+}
+
+export async function createAdminPaymentSetting(input: PaymentSettingRequest): Promise<PaymentSettingResponse> {
+  const { data, error, response } = await client.POST('/admin/payment-settings', { body: input })
+  if (!data) throwApiError(error, response)
+  return data
+}
+
+export async function getNotifications(): Promise<NotificationResponse> {
+  const { data, error, response } = await client.GET('/notifications')
+  if (!data) throwApiError(error, response)
+  return data
+}
+
+export async function readNotification(id: number): Promise<void> {
+  const { data, error, response } = await client.POST('/notifications/{notificationId}/read', {
+    params: { path: { notificationId: id } },
+  })
+  if (!data) throwApiError(error, response)
+}
+
+export async function readAllNotifications(): Promise<void> {
+  const { error, response } = await client.POST('/notifications/read-all')
+  if (!response.ok) throwApiError(error, response)
 }
 
 export async function reviewAdminPayment(

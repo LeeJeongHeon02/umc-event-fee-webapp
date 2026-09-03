@@ -19,7 +19,7 @@ class KakaoOAuth2UserServiceTest {
     void 최초_카카오_로그인이면_온보딩_대기_회원을_생성한다() {
         var repository = mock(MemberRepository.class);
         var now = Instant.parse("2026-09-02T00:00:00Z");
-        var service = new KakaoOAuth2UserService(repository, Clock.fixed(now, ZoneOffset.UTC));
+        var service = new KakaoOAuth2UserService(repository, Clock.fixed(now, ZoneOffset.UTC), "");
         when(repository.findByKakaoId("12345")).thenReturn(Optional.empty());
         when(repository.save(any(Member.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -36,7 +36,7 @@ class KakaoOAuth2UserServiceTest {
         var repository = mock(MemberRepository.class);
         var existing = Member.pendingKakaoMember("12345", "기존닉네임", Instant.EPOCH);
         when(repository.findByKakaoId("12345")).thenReturn(Optional.of(existing));
-        var service = new KakaoOAuth2UserService(repository, Clock.systemUTC());
+        var service = new KakaoOAuth2UserService(repository, Clock.systemUTC(), "");
 
         assertThat(service.findOrCreateMember("12345", "변경닉네임")).isSameAs(existing);
         verify(repository, never()).save(any());

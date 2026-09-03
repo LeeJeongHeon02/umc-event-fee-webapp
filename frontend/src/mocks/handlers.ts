@@ -3,6 +3,8 @@ import type {
   AdminEventCreateRequest,
   AdminEventResponse,
   AdminEventUpdateRequest,
+  AdminDuesRoundResponse,
+  AdminMemberResponse,
   EventDetail,
   MeResponse,
   PaymentDetail,
@@ -49,6 +51,15 @@ const createAdminEvents = (): AdminEventResponse[] => [
   },
 ]
 let currentAdminEvents = createAdminEvents()
+let currentAdminDuesRounds: AdminDuesRoundResponse[] = [{
+  id: 7, title: adminDuesRound.title, amount: adminDuesRound.amount, dueAt: adminDuesRound.dueAt,
+  status: 'PUBLISHED', bankName: '카카오뱅크', accountNumber: '3333-12-3456789', accountHolder: '김총무',
+  targetCount: 48, createdAt: '2026-08-20T00:00:00Z', updatedAt: '2026-08-21T00:00:00Z', version: 1,
+}]
+let currentAdminMembers: AdminMemberResponse[] = [{
+  ...activeMember, kakaoProfileName: activeMember.kakaoProfileName ?? '', displayNickname: activeMember.displayNickname ?? '',
+  createdAt: '2026-08-20T00:00:00Z', updatedAt: '2026-08-21T00:00:00Z', version: 0,
+}]
 
 export function resetMockState() {
   currentMember = { ...activeMember }
@@ -57,6 +68,7 @@ export function resetMockState() {
   currentAdminEventParticipants = structuredClone(adminEventParticipants)
   currentAdminDuesPayments = structuredClone(adminDuesPayments)
   currentAdminEvents = createAdminEvents()
+  currentAdminDuesRounds = [{ id: 7, title: adminDuesRound.title, amount: adminDuesRound.amount, dueAt: adminDuesRound.dueAt, status: 'PUBLISHED', bankName: '카카오뱅크', accountNumber: '3333-12-3456789', accountHolder: '김총무', targetCount: 48, createdAt: '2026-08-20T00:00:00Z', updatedAt: '2026-08-21T00:00:00Z', version: 1 }]
 }
 
 function problem(status: number, code: string, detail: string) {
@@ -74,6 +86,8 @@ function problem(status: number, code: string, detail: string) {
 
 export const handlers = [
   http.get(/\/api\/v1\/me$/, () => HttpResponse.json(currentMember)),
+  http.get(/\/api\/v1\/notifications$/, () => HttpResponse.json({ items: [], unreadCount: 0 })),
+  http.post(/\/api\/v1\/notifications\/read-all$/, () => new HttpResponse(null, { status: 204 })),
 
   http.patch(/\/api\/v1\/me\/onboarding$/, async ({ request }) => {
     const body = (await request.json()) as { name: string; part: MeResponse['part'] }
@@ -143,6 +157,43 @@ export const handlers = [
     currentAdminEvents.splice(index, 1)
     return new HttpResponse(null, { status: 204 })
   }),
+
+  http.post(/\/api\/v1\/admin\/events\/\d+\/(?:close|cancel)$/, async ({ request }) => {
+    const match = new URL(request.url).pathname.match(/events\/(\d+)\/(close|cancel)$/)
+    const index = currentAdminEvents.findIndex((event) => event.id === Number(match?.[1]))
+    if (index < 0) return problem(404, 'RESOURCE_NOT_FOUND', '행사를 찾을 수 없습니다.')
+    const body = (await request.json()) as { version: number }
+    currentAdminEvents[index] = { ...currentAdminEvents[index], status: match?.[2] === 'close' ? 'CLOSED' : 'CANCELED', version: body.version + 1 }
+    return match?.[2] === 'close' ? HttpResponse.json(currentAdminEvents[index]) : HttpResponse.json({ eventStatus: 'CANCELED', voidedPaymentCount: 2, refundPendingCount: 1, version: body.version + 1 })
+  }),
+
+  http.get(/\/api\/v1\/admin\/dues-rounds$/, () => HttpResponse.json(currentAdminDuesRounds)),
+  http.post(/\/api\/v1\/admin\/dues-rounds$/, async ({ request }) => {
+    const body = await request.json() as Omit<AdminDuesRoundResponse, 'id' | 'status' | 'targetCount' | 'createdAt' | 'updatedAt'>
+    const now = new Date().toISOString()
+    const round: AdminDuesRoundResponse = { ...body, id: 8, status: 'DRAFT', targetCount: 0, createdAt: now, updatedAt: now }
+    currentAdminDuesRounds = [round, ...currentAdminDuesRounds]
+    return HttpResponse.json(round, { status: 201 })
+  }),
+  http.post(/\/api\/v1\/admin\/dues-rounds\/\d+\/publish$/, async ({ request }) => {
+    const id = Number(new URL(request.url).pathname.match(/dues-rounds\/(\d+)\/publish$/)?.[1])
+    const body = await request.json() as { version: number }
+    const index = currentAdminDuesRounds.findIndex((round) => round.id === id)
+    currentAdminDuesRounds[index] = { ...currentAdminDuesRounds[index], status: 'PUBLISHED', targetCount: 5, version: body.version + 1 }
+    return HttpResponse.json({ duesRound: currentAdminDuesRounds[index], createdPaymentCount: 5 })
+  }),
+  http.delete(/\/api\/v1\/admin\/dues-rounds\/\d+$/, ({ request }) => {
+    const id = Number(new URL(request.url).pathname.match(/dues-rounds\/(\d+)$/)?.[1])
+    currentAdminDuesRounds = currentAdminDuesRounds.filter((round) => round.id !== id)
+    return new HttpResponse(null, { status: 204 })
+  }),
+  http.get(/\/api\/v1\/admin\/members$/, () => HttpResponse.json(currentAdminMembers)),
+  http.get(/\/api\/v1\/admin\/refunds$/, () => HttpResponse.json([])),
+  http.get(/\/api\/v1\/admin\/payment-settings$/, () => HttpResponse.json([{
+    id: 1, bankName: '카카오뱅크', accountNumber: '3333-12-3456789', accountHolder: '김총무',
+    kakaoPayReceiveUrl: 'https://qr.kakaopay.com/example', active: true, createdBy: 15,
+    createdAt: '2026-08-20T00:00:00Z',
+  }])),
 
   http.get(/\/api\/v1\/events$/, () =>
     HttpResponse.json({

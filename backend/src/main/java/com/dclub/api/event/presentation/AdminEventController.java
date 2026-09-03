@@ -46,6 +46,18 @@ public class AdminEventController {
         return service.publish(eventId, request);
     }
 
+    @PostMapping("/{eventId}/close")
+    AdminEventResponse close(@PathVariable long eventId,
+                             @Valid @RequestBody AdminEventTransitionRequest request) {
+        return service.close(eventId, request);
+    }
+
+    @PostMapping("/{eventId}/cancel")
+    AdminEventCancelResponse cancel(@PathVariable long eventId,
+                                    @Valid @RequestBody AdminEventTransitionRequest request) {
+        return service.cancel(eventId, request);
+    }
+
     @DeleteMapping("/{eventId}")
     ResponseEntity<Void> delete(@PathVariable long eventId, @RequestParam long version) {
         service.delete(eventId, version);

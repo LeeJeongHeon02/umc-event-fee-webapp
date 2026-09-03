@@ -1,6 +1,6 @@
 # 교내 개발 동아리 행사·회비 관리 웹앱 개발 계획
 
-> 문서 상태: v0.5
+> 문서 상태: MVP 구현 완료 v1.0 (2026-09-02)
 > 개발 전략: Frontend First + Spec-Driven Development + Test-Driven Development  
 > 연관 문서: [서비스 기획서](./product-plan.md) · [ERD 설계서](./erd.md) · [API 명세서](./api-spec.md) · [통합 테스트 보고서](./integration-test-report.md)
 
@@ -14,11 +14,23 @@
 6. 카카오 로그인, 계좌번호, 운영진 권한은 기능 구현 초기부터 보안 경계로 취급한다.
 7. 각 단계는 실행 가능한 빌드와 자동화된 테스트를 남긴 상태로 종료한다.
 
-## 현재 우선 작업: 통합 안정화 완료
+## 현재 상태: 배포 전 외부 설정·베타 검증 대기
 
 2026-09-02 실제 API 연동 테스트 결과를 기준으로 신규 기능 확장보다 현재 세로 기능을 배포 가능한 기준점으로 만드는 작업을 먼저 수행한다.
 
 권장 작업 브랜치: `feature/integration-hardening`
+
+MVP 완료 범위:
+
+- 카카오 OAuth, 온보딩, 최초 ADMIN 부트스트랩, 회원 승인·정지·역할 변경
+- 행사 초안 CRUD·공개·종료·취소, 참가 신청·취소와 참가비 부과
+- 회비 차수 생성·공개와 활성 회원 대상 일괄 부과
+- 송금 신고, 운영진 승인·반려, 행사 취소 환불 대기와 수동 환불 완료
+- 공용 송금정보 버전 등록과 과거 납부 항목의 송금정보 스냅샷 보존
+- React 회원·운영진 화면, OpenAPI 생성 타입, MSW, 통합 테스트, 실제 API E2E
+- PostgreSQL Testcontainers, GitHub Actions CI, Docker Compose·Caddy 운영 배포 구성
+
+코드로 완료할 수 없는 남은 작업은 카카오 앱 키·도메인·운영 DB 비밀값 설정과 실제 사용자 베타 검증이다. 배포 절차는 [운영 배포 가이드](./deployment-guide.md)를 따른다.
 
 완료된 개발 순서:
 
@@ -91,7 +103,7 @@ club-event-fee-webapp/
 
 ### 3.2 백엔드
 
-- Java 21 + Spring Boot 3
+- Java 17 + Spring Boot 3
 - Spring Security OAuth2 Client
 - Spring Data JPA
 - PostgreSQL + Flyway
@@ -185,7 +197,7 @@ club-event-fee-webapp/
 - 운영진 화면의 데스크톱 사이드바와 모바일 하단 내비게이션
 - 행사 초안 생성·수정·삭제·공개 화면과 MSW 테스트
 
-후속 범위:
+추가 개선 백로그:
 
 - 행사 마감·취소
 - 회비 차수 생성과 부과 대상 미리보기
@@ -215,16 +227,18 @@ club-event-fee-webapp/
 - 카카오 OAuth 최초 회원 생성·재로그인 조회와 세션 기반 현재 회원 확인
 - 운영 프로필의 OAuth 로그인 성공 후 온보딩·승인·홈 분기
 - PostgreSQL 16 Testcontainers 기반 Flyway·유일 제약 테스트
-- PostgreSQL 16 Testcontainers를 포함한 백엔드 자동화 테스트 28건 통과
+- PostgreSQL 16 Testcontainers 통합 테스트를 포함한 백엔드 자동화 테스트 35건 통과
 - 개발용 회원 전환 헤더와 일반 회원의 운영진 API 접근 차단 검증
+- 운영진 회원·행사·회비·납부·환불·송금정보 관리와 인앱 알림 구현
+- 운영 Docker Compose, Caddy HTTPS 프록시, GitHub Actions CI 구성
 
 환경 제약으로 로컬 빌드는 Java 17을 사용한다. Spring Boot 3.5가 Java 17 이상을 지원하므로 현재 개발에는 문제가 없으며, 배포 환경 확정 시 Java 21 툴체인으로 상향한다.
 
-후속 범위:
+외부 설정 후 검증 범위:
 
 - 카카오 개발자 테스트 앱으로 실제 Authorization Code 왕복 검증
-- 프론트엔드의 CSRF 쿠키 헤더 전송
-- 미승인 회원 접근 보안 테스트
+- 배포 도메인의 DNS·HTTPS 및 실제 모바일 송금 동선 검증
+- GitHub Actions Ubuntu 환경의 Testcontainers 실행 확인
 
 TDD 우선 대상:
 
@@ -259,7 +273,7 @@ TDD 우선 대상:
 
 목표: 송금 신고, 운영진 확인, 회비 부과 흐름을 실제 API로 제공한다.
 
-현재 내 납부 목록·상세·송금 신고, 운영진 대시보드·행사 참가자·회비 납부 조회, 송금 승인·반려까지 구현했다. 회비 차수 생성과 대상자 일괄 부과는 후속 범위다.
+내 납부 목록·상세·송금 신고, 운영진 대시보드·행사 참가자·회비 납부 조회, 송금 승인·반려, 회비 차수 생성·활성 회원 대상 일괄 부과, 환불 완료 처리를 구현했다.
 
 TDD 우선 대상:
 

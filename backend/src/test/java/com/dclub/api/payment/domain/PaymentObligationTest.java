@@ -53,6 +53,18 @@ class PaymentObligationTest {
         assertThat(payment.getStatus()).isEqualTo(PaymentStatus.REFUND_PENDING);
     }
 
+    @Test
+    void 환불_대기_납부를_환불_완료한다() {
+        var payment = payment(30_000);
+        payment.report(now.plusSeconds(60));
+        payment.confirm(now.plusSeconds(120));
+        payment.cancelForEvent(now.plusSeconds(180));
+
+        payment.completeRefund(now.plusSeconds(240));
+
+        assertThat(payment.getStatus()).isEqualTo(PaymentStatus.REFUNDED);
+    }
+
     private PaymentObligation payment(long amount) {
         return new PaymentObligation(1L, PaymentType.MEMBERSHIP_DUE, amount,
                 PaymentSourceType.DUES_ROUND, 7L, "2학기 회비", now.plusSeconds(3600), now);

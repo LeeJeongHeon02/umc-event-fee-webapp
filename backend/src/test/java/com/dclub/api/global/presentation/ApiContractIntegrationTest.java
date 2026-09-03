@@ -27,7 +27,7 @@ class ApiContractIntegrationTest {
     void 현재_운영진과_행사_상세를_조회한다() throws Exception {
         mockMvc.perform(get("/me"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.role").value("STAFF"))
+                .andExpect(jsonPath("$.role").value("ADMIN"))
                 .andExpect(jsonPath("$.displayNickname").value("PE(Web) 김총무"));
 
         mockMvc.perform(get("/events/42"))
@@ -159,5 +159,73 @@ class ApiContractIntegrationTest {
                         .content("{\"version\":" + updatedVersion + "}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("PUBLISHED"));
+
+        mockMvc.perform(get("/notifications"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.unreadCount").value(1))
+                .andExpect(jsonPath("$.items[0].title").value("새 행사가 공개됐어요"));
+    }
+
+    @Test
+    void 운영진은_회비_차수를_공개해_활성_회원의_납부_항목을_생성한다() throws Exception {
+        String createdBody = mockMvc.perform(post("/admin/dues-rounds")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {"title":"2026년 겨울 회비","amount":20000,"dueAt":"2026-12-01T00:00:00Z",
+                             "bankName":"카카오뱅크","accountNumber":"3333-01-1234567","accountHolder":"김총무","version":0}
+                            """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.status").value("DRAFT"))
+                .andReturn().getResponse().getContentAsString();
+        long id = objectMapper.readTree(createdBody).get("id").asLong();
+        long version = objectMapper.readTree(createdBody).get("version").asLong();
+
+        mockMvc.perform(post("/admin/dues-rounds/{id}/publish", id)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"version\":" + version + "}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.duesRound.status").value("PUBLISHED"))
+                .andExpect(jsonPath("$.createdPaymentCount").value(5));
+
+        mockMvc.perform(get("/admin/dues-rounds/{id}/payments", id))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items.length()").value(5));
+    }
+
+    @Test
+    void 행사_취소로_발생한_환불을_완료_처리한다() throws Exception {
+        mockMvc.perform(post("/admin/events/42/cancel")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"version\":0,\"reason\":\"우천 취소\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.eventStatus").value("CANCELED"))
+                .andExpect(jsonPath("$.refundPendingCount").value(1));
+
+        mockMvc.perform(get("/admin/refunds"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].paymentId").value(314));
+
+        mockMvc.perform(post("/admin/payment-obligations/314/refund")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"version\":3,\"note\":\"계좌 환불 완료\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("REFUNDED"));
+    }
+
+    @Test
+    void 최고_관리자는_송금정보를_새_버전으로_교체한다() throws Exception {
+        mockMvc.perform(post("/admin/payment-settings")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {"bankName":"국민은행","accountNumber":"123-456-789","accountHolder":"김총무"}
+                            """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.active").value(true))
+                .andExpect(jsonPath("$.bankName").value("국민은행"));
+
+        mockMvc.perform(get("/admin/payment-settings"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].active").value(true))
+                .andExpect(jsonPath("$[1].active").value(false));
     }
 }

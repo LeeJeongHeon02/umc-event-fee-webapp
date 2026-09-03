@@ -1,6 +1,7 @@
 package com.dclub.api.member.domain;
 
 import jakarta.persistence.*;
+import com.dclub.api.global.common.ApiException;
 import java.time.Instant;
 
 @Entity
@@ -58,12 +59,64 @@ public class Member {
         return new Member(kakaoId, profileName, null, null, MemberRole.MEMBER, MemberStatus.PENDING, false, now);
     }
 
+    public static Member bootstrapAdmin(String kakaoId, String profileName, Instant now) {
+        return new Member(kakaoId, profileName, null, null, MemberRole.ADMIN, MemberStatus.PENDING, false, now);
+    }
+
     public void completeOnboarding(String name, MemberPart part, Instant now) {
         this.name = name;
         this.part = part;
         this.onboardingCompleted = true;
-        if (this.status != MemberStatus.ACTIVE) this.status = MemberStatus.PENDING;
+        if (role == MemberRole.ADMIN) {
+            this.status = MemberStatus.ACTIVE;
+            this.approvedAt = now;
+        } else if (this.status != MemberStatus.ACTIVE) {
+            this.status = MemberStatus.PENDING;
+        }
         this.updatedAt = now;
+    }
+
+    public void approve(long expectedVersion, Instant now) {
+        validateVersion(expectedVersion);
+        if (!onboardingCompleted || status != MemberStatus.PENDING) {
+            throw ApiException.conflict("MEMBER_STATE_CONFLICT", "승인 대기 중인 회원만 승인할 수 있습니다.");
+        }
+        status = MemberStatus.ACTIVE;
+        approvedAt = now;
+        updatedAt = now;
+    }
+
+    public void suspend(long expectedVersion, Instant now) {
+        validateVersion(expectedVersion);
+        if (status != MemberStatus.ACTIVE) {
+            throw ApiException.conflict("MEMBER_STATE_CONFLICT", "활동 중인 회원만 정지할 수 있습니다.");
+        }
+        status = MemberStatus.SUSPENDED;
+        updatedAt = now;
+    }
+
+    public void changeRole(MemberRole nextRole, long expectedVersion, Instant now) {
+        validateVersion(expectedVersion);
+        if (status != MemberStatus.ACTIVE) {
+            throw ApiException.conflict("MEMBER_STATE_CONFLICT", "활동 중인 회원의 역할만 변경할 수 있습니다.");
+        }
+        role = nextRole;
+        updatedAt = now;
+    }
+
+    public void promoteBootstrapAdmin(Instant now) {
+        role = MemberRole.ADMIN;
+        if (onboardingCompleted) {
+            status = MemberStatus.ACTIVE;
+            approvedAt = now;
+        }
+        updatedAt = now;
+    }
+
+    private void validateVersion(long expectedVersion) {
+        if (version != expectedVersion) {
+            throw ApiException.conflict("MEMBER_STATE_CONFLICT", "회원 정보가 변경되었습니다. 새로고침해 주세요.");
+        }
     }
 
     public boolean canManage() {
@@ -89,5 +142,7 @@ public class Member {
     public MemberStatus getStatus() { return status; }
     public boolean isOnboardingCompleted() { return onboardingCompleted; }
     public Instant getApprovedAt() { return approvedAt; }
+    public Instant getCreatedAt() { return createdAt; }
+    public Instant getUpdatedAt() { return updatedAt; }
     public long getVersion() { return version; }
 }

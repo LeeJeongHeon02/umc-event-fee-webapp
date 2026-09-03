@@ -210,7 +210,7 @@ Location: /api/v1/events/42
 | `MemberStatus` | `PENDING`, `ACTIVE`, `SUSPENDED`, `WITHDRAWN` |
 | `EventStatus` | `DRAFT`, `PUBLISHED`, `CLOSED`, `CANCELED` |
 | `ParticipationStatus` | `JOINED`, `CANCELED` |
-| `DuesRoundStatus` | `DRAFT`, `OPEN`, `CLOSED` |
+| `DuesRoundStatus` | `DRAFT`, `PUBLISHED`, `CLOSED` |
 | `PaymentType` | `EVENT_FEE`, `MEMBERSHIP_DUE` |
 | `PaymentStatus` | `NOT_REQUIRED`, `UNPAID`, `REPORTED`, `CONFIRMED`, `REJECTED`, `VOID`, `REFUND_PENDING`, `REFUNDED` |
 | `PaymentMethod` | `BANK_TRANSFER`, `KAKAO_PAY_CODE` |
@@ -830,7 +830,7 @@ DELETE /api/v1/admin/events/{eventId}?version=0
 - 성공: `204 No Content`
 - 버전 또는 상태가 맞지 않으면 `409`를 반환한다.
 
-### 8.7 행사 마감(후속 범위)
+### 8.7 행사 마감
 
 ```http
 POST /api/v1/admin/events/{eventId}/close
@@ -847,7 +847,7 @@ POST /api/v1/admin/events/{eventId}/close
 }
 ```
 
-### 8.8 행사 취소(후속 범위)
+### 8.8 행사 취소
 
 ```http
 POST /api/v1/admin/events/{eventId}/cancel
@@ -1004,7 +1004,7 @@ POST /api/v1/admin/dues-rounds/{roundId}/target-preview
 ### 9.5 회비 회차 게시 및 부과
 
 ```http
-POST /api/v1/admin/dues-rounds/{roundId}/open
+POST /api/v1/admin/dues-rounds/{roundId}/publish
 ```
 
 - 권한: `STAFF`
@@ -1274,8 +1274,8 @@ GET /api/v1/admin/audit-logs
 
 | 현재 | 요청 | 다음 | API |
 |---|---|---|---|
-| `DRAFT` | 게시 및 대상 부과 | `OPEN` | `POST /admin/dues-rounds/{id}/open` |
-| `OPEN` | 마감 | `CLOSED` | `POST /admin/dues-rounds/{id}/close` |
+| `DRAFT` | 게시 및 대상 부과 | `PUBLISHED` | `POST /admin/dues-rounds/{id}/publish` |
+| `PUBLISHED` | 마감 | `CLOSED` | `POST /admin/dues-rounds/{id}/close` |
 
 ### 13.3 납부
 

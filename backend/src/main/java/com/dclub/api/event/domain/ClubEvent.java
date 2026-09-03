@@ -86,6 +86,24 @@ public class ClubEvent {
         updatedAt = now;
     }
 
+    public void close(long expectedVersion, Instant now) {
+        validateExpectedVersion(expectedVersion);
+        if (status != EventStatus.PUBLISHED) {
+            throw ApiException.conflict("EVENT_NOT_PUBLISHED", "공개 중인 행사만 마감할 수 있습니다.");
+        }
+        status = EventStatus.CLOSED;
+        updatedAt = now;
+    }
+
+    public void cancel(long expectedVersion, Instant now) {
+        validateExpectedVersion(expectedVersion);
+        if (status == EventStatus.CANCELED) {
+            throw ApiException.conflict("EVENT_ALREADY_CANCELED", "이미 취소된 행사입니다.");
+        }
+        status = EventStatus.CANCELED;
+        updatedAt = now;
+    }
+
     public void validateDeletable(long expectedVersion, long participationCount) {
         validateExpectedVersion(expectedVersion);
         if (status != EventStatus.DRAFT || participationCount > 0) {
