@@ -32,7 +32,7 @@
 
 | 명령 | 결과 |
 |---|---|
-| `backend/gradlew.bat test` | 성공, PostgreSQL 16 Testcontainers를 포함해 35건 통과 |
+| `backend/gradlew.bat test` | 성공, PostgreSQL 16 Testcontainers를 포함해 36건 통과 |
 | `frontend/npm test` | 성공, 10건 |
 | `frontend/npm run typecheck` | 성공 |
 | Node 24.19.0 `vite build` | 성공, 445개 모듈 번들링 |
@@ -64,6 +64,7 @@
 - 행사 참가 취소 화면과 `VOID`/`REFUND_PENDING` 결과를 연결했다.
 - Playwright가 실제 Spring API를 구동해 핵심 흐름을 검증하도록 구성했다.
 - 백엔드를 도메인 우선 구조로 나누고 각 도메인 내부에 레이어를 배치했다.
+- 운영 SPA의 원본 `XSRF-TOKEN` 헤더 검증 처리기를 추가해 온보딩 등 상태 변경 요청의 CSRF 403을 해결했다.
 
 ## 6. 다음 검증 기준
 

@@ -24,7 +24,9 @@ public class SecurityConfig {
                                            KakaoOAuth2UserService kakaoOAuth2UserService,
                                            OAuthLoginSuccessHandler successHandler) throws Exception {
         return http
-                .csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()))
+                .csrf(csrf -> csrf
+                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                        .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler()))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/actuator/health", "/oauth2/**", "/login/**").permitAll()
                         .anyRequest().authenticated())
