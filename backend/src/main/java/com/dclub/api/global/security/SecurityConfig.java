@@ -23,9 +23,10 @@ public class SecurityConfig {
     SecurityFilterChain productionSecurity(HttpSecurity http,
                                            KakaoOAuth2UserService kakaoOAuth2UserService,
                                            OAuthLoginSuccessHandler successHandler) throws Exception {
+        CookieCsrfTokenRepository csrfTokenRepository = cookieCsrfTokenRepository();
         return http
                 .csrf(csrf -> csrf
-                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                        .csrfTokenRepository(csrfTokenRepository)
                         .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler()))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/actuator/health", "/oauth2/**", "/login/**",
@@ -35,5 +36,13 @@ public class SecurityConfig {
                         .userInfoEndpoint(userInfo -> userInfo.userService(kakaoOAuth2UserService))
                         .successHandler(successHandler))
                 .build();
+    }
+
+    static CookieCsrfTokenRepository cookieCsrfTokenRepository() {
+        CookieCsrfTokenRepository repository = CookieCsrfTokenRepository.withHttpOnlyFalse();
+        // The React app runs outside the backend context path (/api/v1), so it must be able to
+        // read the CSRF cookie from pages such as /onboarding and mirror it into the request header.
+        repository.setCookiePath("/");
+        return repository;
     }
 }
