@@ -4,7 +4,7 @@ import { Link, useParams } from 'react-router-dom'
 import { AdminReviewActions } from '../components/AdminReviewActions'
 import { ErrorState, LoadingState } from '../components/AsyncState'
 import { StatusBadge } from '../components/StatusBadge'
-import { getAdminDuesPayments } from '../services/api'
+import { ApiError, getAdminDuesPayments } from '../services/api'
 import { formatDateTime, formatWon } from '../services/format'
 import type { PaymentStatus } from '../services/types'
 
@@ -15,7 +15,7 @@ export function AdminFeePaymentsPage() {
   const paymentsQuery = useQuery({
     queryKey: ['admin', 'dues-payments', duesRoundId],
     queryFn: () => getAdminDuesPayments(duesRoundId),
-    enabled: Number.isFinite(duesRoundId),
+    enabled: Number.isSafeInteger(duesRoundId) && duesRoundId > 0,
   })
 
   const filteredItems = useMemo(() => {
@@ -26,11 +26,15 @@ export function AdminFeePaymentsPage() {
     )
   }, [paymentsQuery.data?.items, query, status])
 
+  if (!Number.isSafeInteger(duesRoundId) || duesRoundId <= 0 || (paymentsQuery.error instanceof ApiError && paymentsQuery.error.status === 404)) {
+    return <ErrorState title="회비 차수를 찾을 수 없어요" description="삭제되었거나 존재하지 않는 회비 차수입니다. 송금 신고 목록에서 확인해 주세요."
+      action={<Link className="secondary-button" to="/admin/payment-reports">송금 신고 목록으로</Link>} />
+  }
   if (paymentsQuery.isLoading) return <LoadingState label="회비 납부 내역을 불러오는 중" />
   if (paymentsQuery.isError) return <ErrorState />
 
   const { duesRound, items } = paymentsQuery.data!
-  const collectionRate = Math.round((duesRound.confirmedCount / duesRound.targetCount) * 100)
+  const collectionRate = duesRound.targetCount === 0 ? 0 : Math.round((duesRound.confirmedCount / duesRound.targetCount) * 100)
 
   return (
     <div className="admin-page">
@@ -73,9 +77,8 @@ export function AdminFeePaymentsPage() {
           </table>
         </div>
         {filteredItems.length === 0 && <p className="admin-empty">조건에 맞는 납부 내역이 없습니다.</p>}
-        <p className="admin-list-footnote">목 데이터에는 전체 {duesRound.targetCount}명 중 대표 {items.length}명의 내역만 표시됩니다.</p>
+        <p className="admin-list-footnote">납부 대상 {duesRound.targetCount}명 · 조회된 내역 {items.length}건</p>
       </section>
     </div>
   )
 }
-

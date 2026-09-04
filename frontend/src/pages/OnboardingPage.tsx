@@ -7,6 +7,7 @@ import { z } from 'zod'
 import { completeOnboarding } from '../services/api'
 import type { MemberPart } from '../services/types'
 import { useCurrentMember } from '../hooks/useCurrentMember'
+import { LogoutButton } from '../components/LogoutButton'
 
 const parts: { value: MemberPart; label: string; description: string }[] = [
   { value: 'PLAN', label: 'Plan', description: '문제를 정의하고 경험을 설계해요' },
@@ -95,6 +96,7 @@ export function OnboardingPage() {
             {mutation.isPending ? '저장 중…' : '이 이름으로 시작하기'}
           </button>
         </form>
+        <LogoutButton />
       </section>
     </main>
   )

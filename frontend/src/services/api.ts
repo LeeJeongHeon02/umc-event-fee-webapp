@@ -79,6 +79,12 @@ export async function getMe(): Promise<MeResponse> {
   return data
 }
 
+export async function logoutMember(): Promise<void> {
+  const { error, response } = await client.POST('/auth/logout')
+  // An expired session is already logged out. Other failures must remain visible and retryable.
+  if (!response.ok && response.status !== 401) throwApiError(error, response)
+}
+
 export async function registerLocalMember(input: LocalRegisterRequest): Promise<LocalRegisterResponse> {
   const { data, error, response } = await client.POST('/auth/local/register', { body: input })
   if (!data) throwApiError(error, response)
@@ -302,6 +308,12 @@ export async function changeAdminMemberRole(id: number, role: MemberRole, versio
 
 export async function getAdminRefunds(): Promise<AdminPaymentRow[]> {
   const { data, error, response } = await client.GET('/admin/refunds')
+  if (!data) throwApiError(error, response)
+  return data
+}
+
+export async function getAdminPaymentReports(): Promise<AdminPaymentRow[]> {
+  const { data, error, response } = await client.GET('/admin/payment-reports')
   if (!data) throwApiError(error, response)
   return data
 }

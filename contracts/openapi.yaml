@@ -75,6 +75,19 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
+  /auth/logout:
+    post:
+      tags: [Auth]
+      operationId: logoutMember
+      summary: 현재 웹앱 세션 로그아웃
+      description: 카카오·로컬 공통. 세션 무효화와 JSESSIONID·XSRF-TOKEN 쿠키 삭제. CSRF 헤더가 필요하며 카카오 계정 연결은 유지된다.
+      responses:
+        '204':
+          description: 로그아웃 완료 (본문 없음)
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
   /me:
     get:
       tags: [Me]
@@ -654,6 +667,25 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '409':
           $ref: '#/components/responses/Conflict'
+  /admin/payment-reports:
+    get:
+      tags: [Admin]
+      operationId: getAdminPaymentReports
+      summary: 행사비·회비 확인 대기 송금 신고 통합 조회
+      description: STAFF 또는 ADMIN 전용. REPORTED 상태 전체를 최신 신고 순으로 반환한다. 대시보드 미리보기의 10건 제한을 적용하지 않는다. 신고가 없으면 빈 배열이다.
+      responses:
+        '200':
+          description: 확인 대기 송금 신고 목록
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AdminPaymentRow'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
   /admin/refunds:
     get:
       tags: [Admin]
@@ -1028,6 +1060,9 @@ components:
           type: string
         loginId:
           type: string
+        phoneNumber:
+          type: [string, 'null']
+          description: 본인이 가입 시 등록한 전화번호. 카카오 회원은 미등록일 수 있다.
         name:
           type: string
         part:
@@ -1609,6 +1644,8 @@ components:
       type: object
       required: [paymentId, memberId, nickname, name, part, amount, status, dueAt, version]
       properties:
+        source:
+          $ref: '#/components/schemas/PaymentSource'
         paymentId:
           type: integer
           format: int64

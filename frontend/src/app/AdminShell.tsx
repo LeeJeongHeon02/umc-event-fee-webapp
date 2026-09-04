@@ -3,6 +3,7 @@ import { useCurrentMember } from '../hooks/useCurrentMember'
 
 const adminNavItems = [
   { to: '/admin', label: '대시보드', symbol: '▦', end: true },
+  { to: '/admin/payment-reports', label: '송금 신고', symbol: '₩' },
   { to: '/admin/events', label: '행사 관리', symbol: '+' },
   { to: '/admin/dues', label: '회비 관리', symbol: '₩' },
   { to: '/admin/members', label: '회원 관리', symbol: '◎', adminOnly: true },
@@ -33,11 +34,11 @@ export function AdminShell() {
       <div className="admin-workspace">
         <header className="admin-topbar">
           <div><span className="admin-mobile-brand">D: Admin</span></div>
-          <div className="admin-profile">
+          <NavLink to="/mypage" className="admin-profile" aria-label="마이페이지">
             <span>{meQuery.data?.role ?? 'STAFF'}</span>
             <strong>{memberName}</strong>
             <div>{memberName.slice(0, 1)}</div>
-          </div>
+          </NavLink>
         </header>
         <main className="admin-main"><Outlet /></main>
       </div>

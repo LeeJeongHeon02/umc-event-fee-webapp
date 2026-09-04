@@ -187,7 +187,7 @@ p {
   bottom: 0;
   left: 0;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   max-width: none;
   margin: 0 auto;
   padding: 7px max(14px, env(safe-area-inset-right)) calc(7px + env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
@@ -1758,7 +1758,7 @@ p {
   .bottom-nav {
     top: 7px;
     bottom: auto;
-    max-width: 300px;
+    max-width: 380px;
     padding: 0;
     border: 0;
     background: transparent;

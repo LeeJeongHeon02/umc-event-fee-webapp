@@ -47,6 +47,11 @@ public class AdminController {
         return service.refunds();
     }
 
+    @GetMapping("/payment-reports")
+    List<AdminPaymentRow> paymentReports() {
+        return service.paymentReports();
+    }
+
     @PostMapping("/payment-obligations/{paymentId}/refund")
     AdminPaymentReviewResponse completeRefund(@PathVariable long paymentId,
                                               @Valid @RequestBody AdminPaymentReviewRequest request) {

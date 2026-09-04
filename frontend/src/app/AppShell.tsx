@@ -8,12 +8,13 @@ const navItems = [
   { to: '/home', hash: '', label: '홈', icon: <HomeIcon /> },
   { to: '/home#events', hash: '#events', label: '행사', icon: <CalendarIcon /> },
   { to: '/home#payments', hash: '#payments', label: '납부', icon: <WalletIcon /> },
+  { to: '/mypage', hash: '', label: '마이', icon: <UserIcon /> },
 ]
 
 export function AppShell() {
   const location = useLocation()
   const meQuery = useCurrentMember()
-  const canManage = meQuery.data?.role === 'STAFF' || meQuery.data?.role === 'ADMIN'
+  const canManage = meQuery.data?.status === 'ACTIVE' && (meQuery.data?.role === 'STAFF' || meQuery.data?.role === 'ADMIN')
   const memberName = meQuery.data?.name ?? meQuery.data?.kakaoProfileName ?? '회원'
   const memberLabel = meQuery.data?.displayNickname ?? memberName
   const notifications = useQuery({ queryKey: ['notifications'], queryFn: getNotifications, enabled: meQuery.data?.status === 'ACTIVE' })
@@ -31,7 +32,7 @@ export function AppShell() {
             <BellIcon />
             {(notifications.data?.unreadCount ?? 0) > 0 && <span className="notification-dot" />}
           </NavLink>
-          <div className="avatar" aria-label={memberLabel}>{memberName.slice(0, 1)}</div>
+          <NavLink to="/mypage" className="avatar" aria-label={`${memberLabel} 마이페이지`}>{memberName.slice(0, 1)}</NavLink>
         </div>
       </header>
 
@@ -41,7 +42,7 @@ export function AppShell() {
 
       <nav className="bottom-nav" aria-label="주요 메뉴">
         {navItems.map((item) => {
-          const isActive = location.pathname === '/home' && location.hash === item.hash
+          const isActive = location.pathname === item.to.split('#')[0] && location.hash === item.hash
           return (
             <Link key={item.label} to={item.to} className={isActive ? 'active' : undefined} aria-current={isActive ? 'page' : undefined}>
               {item.icon}
@@ -72,4 +73,8 @@ function WalletIcon() {
 
 function BellIcon() {
   return <Icon><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" /><path d="M10 21h4" /></Icon>
+}
+
+function UserIcon() {
+  return <Icon><circle cx="12" cy="8" r="4" /><path d="M4 21v-2a8 8 0 0 1 16 0v2" /></Icon>
 }

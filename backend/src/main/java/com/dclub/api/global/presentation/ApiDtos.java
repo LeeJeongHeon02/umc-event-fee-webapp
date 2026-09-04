@@ -11,7 +11,7 @@ import java.util.List;
 public final class ApiDtos {
     private ApiDtos() {}
 
-    public record MeResponse(Long id, String kakaoProfileName, String loginId, String name, MemberPart part,
+    public record MeResponse(Long id, String kakaoProfileName, String loginId, String phoneNumber, String name, MemberPart part,
                              String displayNickname, MemberRole role, MemberStatus status,
                              boolean onboardingCompleted, Instant approvedAt) {}
 
@@ -160,7 +160,7 @@ public final class ApiDtos {
 
     public record AdminPaymentRow(Long paymentId, Long memberId, String nickname, String name, MemberPart part,
                                   long amount, PaymentStatus status, Instant dueAt,
-                                  PaymentReportResponseItem latestReport, long version) {}
+                                  PaymentReportResponseItem latestReport, long version, PaymentSource source) {}
 
     public record AdminDashboardResponse(long memberCount, long pendingMemberCount, long upcomingEventCount,
                                          long unpaidCount, long reportedCount, long expectedAmount,

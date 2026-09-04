@@ -37,7 +37,7 @@ export function AdminDashboardPage() {
         <article className="admin-panel attention-panel">
           <span className="attention-icon" aria-hidden="true">!</span>
           <div><span className="eyebrow">NEEDS ACTION</span><h2>송금 신고 {dashboard.reportedCount}건</h2><p>입금자명과 계좌 내역을 대조한 후 승인해 주세요.</p></div>
-          <Link to="/admin/fees/7/payments">확인하러 가기 →</Link>
+          <Link to="/admin/payment-reports">확인하러 가기 →</Link>
         </article>
       </section>
 
@@ -55,7 +55,7 @@ export function AdminDashboardPage() {
       </section>
 
       <section className="admin-content-section">
-        <div className="admin-section-heading"><div><span className="eyebrow">RECENT REPORTS</span><h2>최근 송금 신고</h2></div><Link to="/admin/fees/7/payments">전체보기</Link></div>
+        <div className="admin-section-heading"><div><span className="eyebrow">RECENT REPORTS</span><h2>최근 송금 신고</h2></div><Link to="/admin/payment-reports">전체보기</Link></div>
         <div className="admin-compact-list">
           {dashboard.recentReports.slice(0, 4).map((payment) => (
             <div key={payment.paymentId}>
@@ -69,4 +69,3 @@ export function AdminDashboardPage() {
     </div>
   )
 }
-

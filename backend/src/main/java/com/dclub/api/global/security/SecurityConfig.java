@@ -16,6 +16,11 @@ public class SecurityConfig {
     }
 
     @Bean
+    CookieCsrfTokenRepository sessionCsrfTokenRepository() {
+        return cookieCsrfTokenRepository();
+    }
+
+    @Bean
     @Profile({"dev", "test", "postgres"})
     SecurityFilterChain developmentSecurity(HttpSecurity http) throws Exception {
         return http
@@ -30,8 +35,8 @@ public class SecurityConfig {
     SecurityFilterChain productionSecurity(HttpSecurity http,
                                            KakaoOAuth2UserService kakaoOAuth2UserService,
                                            OAuthLoginSuccessHandler successHandler,
-                                           ApiSecurityExceptionHandler securityExceptionHandler) throws Exception {
-        CookieCsrfTokenRepository csrfTokenRepository = cookieCsrfTokenRepository();
+                                           ApiSecurityExceptionHandler securityExceptionHandler,
+                                           CookieCsrfTokenRepository csrfTokenRepository) throws Exception {
         return http
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(csrfTokenRepository)

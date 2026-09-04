@@ -10,7 +10,7 @@ describe('AdminDashboardPage', () => {
     expect(await screen.findByRole('heading', { name: '오늘의 운영 현황' })).toBeInTheDocument()
     expect(screen.getByText('확인 대기 송금')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /2026 가을 해커톤/ })).toHaveAttribute('href', '/admin/events/42/participants')
-    expect(screen.getByRole('link', { name: '확인하러 가기 →' })).toHaveAttribute('href', '/admin/fees/7/payments')
+    expect(screen.getByRole('link', { name: '확인하러 가기 →' })).toHaveAttribute('href', '/admin/payment-reports')
+    expect(screen.getByRole('link', { name: '전체보기' })).toHaveAttribute('href', '/admin/payment-reports')
   })
 })
-

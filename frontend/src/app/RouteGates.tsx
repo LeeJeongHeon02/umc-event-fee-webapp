@@ -2,6 +2,14 @@ import { Navigate, Outlet } from 'react-router-dom'
 import { ErrorState, LoadingState } from '../components/AsyncState'
 import { useCurrentMember } from '../hooks/useCurrentMember'
 
+// Account access does not require staff approval, so pending/suspended members can log out too.
+export function AuthenticatedGate() {
+  const me = useCurrentMember()
+  if (me.isLoading) return <LoadingState label="회원 정보를 확인하는 중" />
+  if (me.isError || !me.data) return <Navigate to="/login" replace />
+  return <Outlet />
+}
+
 export function MemberGate() {
   const me = useCurrentMember()
   if (me.isLoading) return <LoadingState label="회원 정보를 확인하는 중" />

@@ -59,11 +59,44 @@ class LocalAuthSecurityIntegrationTest {
         var session = (MockHttpSession) login.getRequest().getSession(false);
         assertThat(session.getId()).isNotEqualTo(oldSessionId);
         mvc.perform(get("/me").session(session)).andExpect(status().isOk())
-                .andExpect(jsonPath("$.loginId").value("secure.member"));
+                .andExpect(jsonPath("$.loginId").value("secure.member"))
+                .andExpect(jsonPath("$.phoneNumber").value("01012345678"))
+                .andExpect(jsonPath("$.passwordHash").doesNotExist());
         mvc.perform(patch("/me/onboarding").session(session)
                         .cookie(token).header("X-XSRF-TOKEN", token.getValue())
                         .contentType(MediaType.APPLICATION_JSON).content("{\"name\":\"새회원\",\"part\":\"PLAN\"}"))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.displayNickname").value("Plan 새회원"));
         mvc.perform(get("/events").session(session)).andExpect(status().isForbidden());
+
+        // Missing CSRF cannot terminate a signed-in session.
+        mvc.perform(post("/auth/logout").session(session)).andExpect(status().isForbidden());
+        assertThat(session.isInvalid()).isFalse();
+        mvc.perform(post("/api/v1/auth/logout").contextPath("/api/v1").session(session)
+                        .cookie(token).header("X-XSRF-TOKEN", token.getValue()))
+                .andExpect(status().isNoContent()).andExpect(content().string(""))
+                .andExpect(cookie().maxAge("JSESSIONID", 0)).andExpect(cookie().path("JSESSIONID", "/api/v1"))
+                .andExpect(cookie().maxAge("XSRF-TOKEN", 0)).andExpect(cookie().path("XSRF-TOKEN", "/"));
+        assertThat(session.isInvalid()).isTrue();
+        mvc.perform(get("/me").cookie(new Cookie("JSESSIONID", session.getId())))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void 카카오_세션도_로그아웃하고_GET_요청은_세션을_종료하지_않는다() throws Exception {
+        var user = new org.springframework.security.oauth2.core.user.DefaultOAuth2User(
+                java.util.List.of(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_MEMBER")),
+                java.util.Map.of("id", "kakao-test", "memberId", 123L), "id");
+        var authentication = new org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken(
+                user, user.getAuthorities(), "kakao");
+        var session = new MockHttpSession();
+        session.setAttribute(org.springframework.security.web.context.HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
+                new org.springframework.security.core.context.SecurityContextImpl(authentication));
+        mvc.perform(get("/auth/logout").session(session)).andExpect(status().isMethodNotAllowed());
+        assertThat(session.isInvalid()).isFalse();
+        var token = mvc.perform(get("/auth/csrf")).andReturn().getResponse().getCookie("XSRF-TOKEN");
+        mvc.perform(post("/auth/logout").session(session).cookie(token).header("X-XSRF-TOKEN", token.getValue()))
+                .andExpect(status().isNoContent());
+        assertThat(session.isInvalid()).isTrue();
+        mvc.perform(get("/me")).andExpect(status().isUnauthorized());
     }
 }

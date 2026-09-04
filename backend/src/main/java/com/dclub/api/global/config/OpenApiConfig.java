@@ -99,7 +99,7 @@ public class OpenApiConfig {
         operation.setTags(List.of(doc.tag()));
         operation.setSummary(doc.summary());
         operation.setDescription(doc.description());
-        if (key.contains(" /auth/")) operation.setSecurity(List.of());
+        if (key.contains(" /auth/") && !key.equals("POST /auth/logout")) operation.setSecurity(List.of());
         response(operation, doc.successCode(), doc.successDescription());
         response(operation, "401", "`AUTHENTICATION_REQUIRED`: 로그인 세션이 없거나 만료되었습니다. 로컬 로그인은 `INVALID_CREDENTIALS`도 반환할 수 있습니다.");
         response(operation, "403", "`FORBIDDEN`: 권한이 없거나 `CSRF_TOKEN_INVALID`: 보안 토큰이 없거나 만료되었습니다.");
@@ -234,6 +234,8 @@ public class OpenApiConfig {
         Map<String, EndpointDoc> docs = new LinkedHashMap<>();
         add(docs, "GET", "/auth/csrf", "getCsrfToken", "Authentication", "CSRF 토큰 조회",
                 "로그인 세션의 상태 변경 요청에 사용할 CSRF 토큰과 헤더 이름을 반환합니다. Swagger에서 POST·PATCH·DELETE 호출 전 먼저 실행하세요.", "200", "CSRF 토큰과 헤더·파라미터 이름을 반환합니다.");
+        add(docs, "POST", "/auth/logout", "logoutMember", "Authentication", "현재 웹앱 세션 로그아웃",
+                "카카오·로컬 로그인 공통. 로그인 세션과 CSRF 토큰을 무효화하고 쿠키를 삭제합니다. POST와 CSRF 헤더가 필요하며 응답 본문은 없습니다. 카카오 계정 연결은 유지됩니다.", "204", "로그아웃 완료", "401", "403");
         add(docs, "POST", "/auth/local/register", "registerLocalMember", "Authentication", "로컬 계정 회원가입",
                 "영문 소문자 기반 아이디, 8~72자 비밀번호, 전화번호로 계정을 생성합니다. 비밀번호는 BCrypt 해시만 저장하며 가입 직후에는 로그인되지 않습니다.", "201", "생성된 회원 ID와 로그인 아이디를 반환합니다.", "400", "409");
         add(docs, "POST", "/auth/local/login", "loginLocalMember", "Authentication", "로컬 계정 로그인",
@@ -268,6 +270,8 @@ public class OpenApiConfig {
         add(docs, "POST", "/notifications/read-all", "markAllNotificationsRead", "Notifications", "전체 알림 읽음 처리",
                 "현재 회원의 모든 알림을 읽음 처리합니다.", "204", "응답 본문 없이 완료되었습니다.");
 
+        add(docs, "GET", "/admin/payment-reports", "getAdminPaymentReports", "Admin payments", "확인 대기 송금 신고 통합 조회",
+                "STAFF/ADMIN 전용. 행사 참가비와 회비 중 REPORTED 상태 전체를 최신 신고 순으로 반환합니다. source에는 실제 행사 또는 회비 차수의 ID와 제목이 포함됩니다. 회비 차수가 없어도 행사 신고를 조회할 수 있으며 신고가 없으면 빈 배열을 반환합니다.", "200", "확인 대기 송금 목록");
         add(docs, "GET", "/admin/dashboard", "getAdminDashboard", "Admin overview", "운영진 대시보드 조회",
                 "활성 회원 수, 미납·신고 건수, 예상·확정 금액과 최근 신고를 반환합니다. STAFF 이상이 필요합니다.", "200", "운영진 대시보드를 반환합니다.");
         add(docs, "GET", "/admin/members", "listMembers", "Admin overview", "회원 목록 조회",

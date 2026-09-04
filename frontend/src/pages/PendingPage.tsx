@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { getMe } from '../services/api'
+import { LogoutButton } from '../components/LogoutButton'
 
 export function PendingPage() {
   const meQuery = useQuery({ queryKey: ['me'], queryFn: getMe })
@@ -22,7 +23,8 @@ export function PendingPage() {
             <span>승인 대기 중</span>
           </div>
         </div>
-        <Link className="secondary-button secondary-button--block" to="/home">개발용 홈 미리보기</Link>
+        <Link className="secondary-button secondary-button--block" to="/mypage">내 정보 확인하기</Link>
+        <LogoutButton />
       </section>
     </main>
   )

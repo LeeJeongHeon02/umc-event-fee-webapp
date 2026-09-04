@@ -61,6 +61,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 현재 웹앱 세션 로그아웃
+         * @description 카카오·로컬 공통. 세션 무효화와 JSESSIONID·XSRF-TOKEN 쿠키 삭제. CSRF 헤더가 필요하며 카카오 계정 연결은 유지된다.
+         */
+        post: operations["logoutMember"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/me": {
         parameters: {
             query?: never;
@@ -508,6 +528,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/payment-reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 행사비·회비 확인 대기 송금 신고 통합 조회
+         * @description STAFF 또는 ADMIN 전용. REPORTED 상태 전체를 최신 신고 순으로 반환한다. 대시보드 미리보기의 10건 제한을 적용하지 않는다. 신고가 없으면 빈 배열이다.
+         */
+        get: operations["getAdminPaymentReports"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/refunds": {
         parameters: {
             query?: never;
@@ -705,6 +745,8 @@ export interface components {
             id: number;
             kakaoProfileName?: string;
             loginId?: string;
+            /** @description 본인이 가입 시 등록한 전화번호. 카카오 회원은 미등록일 수 있다. */
+            phoneNumber?: string | null;
             name?: string;
             part?: components["schemas"]["MemberPart"];
             displayNickname?: string;
@@ -1009,6 +1051,7 @@ export interface components {
             createdPaymentCount: number;
         };
         AdminPaymentRow: {
+            source?: components["schemas"]["PaymentSource"];
             /** Format: int64 */
             paymentId: number;
             /** Format: int64 */
@@ -1340,6 +1383,26 @@ export interface operations {
             };
             400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
+        };
+    };
+    logoutMember: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 로그아웃 완료 (본문 없음) */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
         };
     };
     getMe: {
@@ -2096,6 +2159,28 @@ export interface operations {
             };
             403: components["responses"]["Forbidden"];
             409: components["responses"]["Conflict"];
+        };
+    };
+    getAdminPaymentReports: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 확인 대기 송금 신고 목록 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminPaymentRow"][];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
         };
     };
     getAdminRefunds: {

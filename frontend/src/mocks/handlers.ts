@@ -25,6 +25,7 @@ import {
 } from './fixtures'
 
 let currentMember: MeResponse = { ...activeMember }
+let signedOut = false
 let eventDetails: EventDetail[] = createEventDetails()
 let paymentDetails: PaymentDetail[] = createPaymentDetails()
 let currentAdminEventParticipants = structuredClone(adminEventParticipants)
@@ -62,6 +63,7 @@ let currentAdminMembers: AdminMemberResponse[] = [{
 }]
 
 export function resetMockState() {
+  signedOut = false
   currentMember = { ...activeMember }
   eventDetails = createEventDetails()
   paymentDetails = createPaymentDetails()
@@ -94,6 +96,7 @@ export const handlers = [
     return HttpResponse.json({ memberId: 81, loginId: body.loginId }, { status: 201 })
   }),
   http.post(/\/api\/v1\/auth\/local\/login$/, async ({ request }) => {
+    signedOut = false
     const body = (await request.json()) as { loginId: string }
     currentMember = {
       id: 81,
@@ -104,7 +107,11 @@ export const handlers = [
     }
     return HttpResponse.json({ member: currentMember, redirectPath: '/onboarding' })
   }),
-  http.get(/\/api\/v1\/me$/, () => HttpResponse.json(currentMember)),
+  http.post(/\/api\/v1\/auth\/logout$/, () => {
+    signedOut = true
+    return new HttpResponse(null, { status: 204 })
+  }),
+  http.get(/\/api\/v1\/me$/, () => signedOut ? problem(401, 'AUTHENTICATION_REQUIRED', '로그인이 필요합니다.') : HttpResponse.json(currentMember)),
   http.get(/\/api\/v1\/notifications$/, () => HttpResponse.json({ items: [], unreadCount: 0 })),
   http.post(/\/api\/v1\/notifications\/read-all$/, () => new HttpResponse(null, { status: 204 })),
 
@@ -380,6 +387,15 @@ export const handlers = [
       { status: 201 },
     )
   }),
+
+  http.get(/\/api\/v1\/admin\/payment-reports$/, () => HttpResponse.json([
+    ...currentAdminDuesPayments.filter((item) => item.status === 'REPORTED').map((item) => ({
+      ...item, source: { type: 'DUES_ROUND', id: adminDuesRound.id, title: adminDuesRound.title },
+    })),
+    ...currentAdminEventParticipants.filter((item) => item.paymentStatus === 'REPORTED').map((item) => ({
+      ...item, status: item.paymentStatus, source: { type: 'EVENT', id: adminEventSummary.id, title: adminEventSummary.title },
+    })),
+  ])),
 
   http.get(/\/api\/v1\/admin\/dashboard$/, () => {
     const dashboard = createAdminDashboard()

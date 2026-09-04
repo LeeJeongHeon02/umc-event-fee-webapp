@@ -1,0 +1,31 @@
+.my-page { max-width: 720px; margin: 0 auto; }
+.my-page__heading { margin-bottom: 28px; }
+.my-page__heading h1 { margin: 8px 0; font-size: clamp(26px, 4vw, 34px); letter-spacing: -1px; }
+.my-page__heading p, .my-profile p, .my-page__footer p, .my-links p { color: var(--muted); font-size: 14px; line-height: 1.6; }
+.my-profile { display: flex; align-items: center; flex-wrap: wrap; gap: 16px; padding: 24px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.my-profile > div:not(.avatar) { min-width: 0; flex: 1; overflow-wrap: anywhere; }
+.my-profile h2 { margin: 0 0 4px; font-size: 22px; }
+.my-profile p { margin: 0; }
+.my-profile__status { padding: 7px 10px; border: 1px solid var(--line); border-radius: 8px; font-size: 12px; white-space: nowrap; }
+.my-account { padding: 24px 0 12px; }
+.my-account h2 { margin: 0 0 16px; font-size: 16px; }
+.my-account dl { margin: 0; }
+.my-account dl > div { display: grid; grid-template-columns: 100px minmax(0, 1fr); gap: 16px; padding: 13px 0; font-size: 14px; }
+.my-account dt { color: var(--muted); }
+.my-account dd { margin: 0; text-align: right; overflow-wrap: anywhere; font-weight: 600; }
+.my-links { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); margin: 16px 0 28px; }
+.my-links a { display: flex; justify-content: space-between; align-items: center; min-height: 56px; gap: 16px; font-size: 14px; font-weight: 600; }
+.my-links a + a { border-top: 1px solid var(--line); }
+.my-links a span { color: var(--muted); }
+.my-page__footer { padding-bottom: 16px; }
+.my-page__footer p { text-align: center; font-size: 12px; }
+.logout-action { margin-top: 16px; }
+.avatar:focus-visible, .my-links a:focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; }
+
+@media (max-width: 480px) {
+  .my-page__heading { margin-bottom: 20px; }
+  .my-profile { padding: 18px 0; }
+  .my-account { padding: 20px 0 8px; }
+  .my-account dl > div { padding: 11px 0; }
+  .my-links { margin: 8px 0 16px; }
+}

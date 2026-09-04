@@ -101,6 +101,18 @@ public class AdminApplicationService {
     }
 
     @Transactional(readOnly = true)
+    public List<AdminPaymentRow> paymentReports() {
+        currentMemberProvider.requireStaff();
+        // Unlike the dashboard preview, the review queue must not truncate at ten reports.
+        return paymentRepository.findAllByStatusOrderByUpdatedAtAsc(PaymentStatus.REPORTED).stream()
+                .map(this::paymentRow)
+                .sorted(Comparator.comparing((AdminPaymentRow row) -> row.latestReport() == null
+                        ? Instant.EPOCH : row.latestReport().reportedAt()).reversed()
+                        .thenComparing(AdminPaymentRow::paymentId))
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
     public AdminDuesPaymentPage duesPayments(long duesRoundId) {
         currentMemberProvider.requireStaff();
         var duesRound = duesRoundRepository.findById(duesRoundId)
@@ -216,7 +228,7 @@ public class AdminApplicationService {
                 .orElseThrow(() -> ApiException.notFound("부원을 찾을 수 없습니다."));
         return new AdminPaymentRow(payment.getId(), member.getId(), member.displayNickname(), member.getName(),
                 member.getPart(), payment.getAmount(), payment.getStatus(), payment.getDueAt(),
-                latestReport(payment.getId()), payment.getVersion());
+                latestReport(payment.getId()), payment.getVersion(), mapper.source(payment));
     }
 
     private PaymentReportResponseItem latestReport(Long paymentId) {

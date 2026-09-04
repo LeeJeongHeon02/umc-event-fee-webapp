@@ -14,7 +14,9 @@ import { PendingPage } from '../pages/PendingPage'
 import { AdminMembersPage } from '../pages/AdminMembersPage'
 import { AdminDuesRoundsPage } from '../pages/AdminDuesRoundsPage'
 import { AdminRefundsPage } from '../pages/AdminRefundsPage'
-import { MemberGate, StaffGate } from './RouteGates'
+import { AuthenticatedGate, MemberGate, StaffGate } from './RouteGates'
+import { MyPage } from '../pages/MyPage'
+import { AdminPaymentReportsPage } from '../pages/AdminPaymentReportsPage'
 import { AdminPaymentSettingsPage } from '../pages/AdminPaymentSettingsPage'
 import { NotificationsPage } from '../pages/NotificationsPage'
 
@@ -24,6 +26,11 @@ export function App() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/onboarding" element={<OnboardingPage />} />
       <Route path="/pending" element={<PendingPage />} />
+      <Route element={<AuthenticatedGate />}>
+        <Route element={<AppShell />}>
+          <Route path="/mypage" element={<MyPage />} />
+        </Route>
+      </Route>
       <Route element={<MemberGate />}>
         <Route element={<AppShell />}>
           <Route path="/home" element={<HomePage />} />
@@ -35,6 +42,7 @@ export function App() {
       <Route element={<StaffGate />}>
         <Route path="/admin" element={<AdminShell />}>
           <Route index element={<AdminDashboardPage />} />
+          <Route path="payment-reports" element={<AdminPaymentReportsPage />} />
           <Route path="events" element={<AdminEventsPage />} />
           <Route path="events/:eventId/participants" element={<AdminEventParticipantsPage />} />
           <Route path="dues" element={<AdminDuesRoundsPage />} />
