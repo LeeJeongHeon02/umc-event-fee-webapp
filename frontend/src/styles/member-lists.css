@@ -1,0 +1,20 @@
+.member-list-page { max-width: 960px; margin: 0 auto; }
+.member-list-heading { margin: 8px 0 28px; }
+.member-list-heading h1 { margin: 8px 0; font-size: clamp(28px, 4vw, 36px); letter-spacing: -1px; }
+.member-list-heading p { color: var(--muted); font-size: 14px; line-height: 1.6; }
+.member-list-filters { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 28px; padding: 20px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); }
+.member-list-filters label { display: flex; flex: 1 1 160px; min-width: 0; flex-direction: column; gap: 8px; color: var(--muted); font-size: 12px; }
+.member-list-filters .member-list-search { flex: 2 1 240px; }
+.member-list-filters input, .member-list-filters select { width: 100%; min-width: 0; min-height: 44px; font-size: 16px; }
+.member-list-page .section-heading h2 { font-size: 18px; }
+.member-event-item { min-width: 0; }
+.member-event-participation { margin: 8px 4px 4px; color: var(--muted); font-size: 12px; }
+.member-list-page .payment-card h3, .member-list-page .event-card h3 { overflow-wrap: anywhere; }
+.section-heading a.section-meta { min-height: 44px; display: inline-flex; align-items: center; text-decoration: underline; text-underline-offset: 4px; }
+@media (max-width: 480px) {
+  .member-list-filters { padding: 14px; gap: 12px; }
+  .member-list-filters label { flex-basis: calc(50% - 12px); }
+  .member-list-filters .member-list-search { flex-basis: 100%; }
+  .member-list-page .payment-card { flex-wrap: wrap; gap: 12px; }
+  .member-list-page .payment-card > div { min-width: 0; flex: 1 1 190px; }
+}

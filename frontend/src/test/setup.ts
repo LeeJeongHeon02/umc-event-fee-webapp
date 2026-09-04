@@ -4,6 +4,8 @@ import { afterAll, afterEach, vi } from 'vitest'
 import { resetMockState } from '../mocks/handlers'
 import { server } from './server'
 
+window.scrollTo = vi.fn()
+
 // openapi-fetch captures the current fetch implementation when its client is created.
 // Start MSW before test modules import and create that client.
 server.listen({ onUnhandledRequest: 'error' })

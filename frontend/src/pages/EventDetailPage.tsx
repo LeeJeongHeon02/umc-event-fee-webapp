@@ -43,7 +43,7 @@ export function EventDetailPage() {
 
   return (
     <div className="page detail-page">
-      <Link className="back-link" to="/home">← 홈으로</Link>
+      <Link className="back-link" to="/events">← 행사 목록</Link>
       <section className="event-hero">
         <div className="event-hero__meta">
           <span className="eyebrow">CLUB EVENT</span>

@@ -3,12 +3,13 @@ import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { getNotifications } from '../services/api'
 import { useCurrentMember } from '../hooks/useCurrentMember'
+import { MemberScrollReset } from './MemberNavigation'
 
 const navItems = [
-  { to: '/home', hash: '', label: '홈', icon: <HomeIcon /> },
-  { to: '/home#events', hash: '#events', label: '행사', icon: <CalendarIcon /> },
-  { to: '/home#payments', hash: '#payments', label: '납부', icon: <WalletIcon /> },
-  { to: '/mypage', hash: '', label: '마이', icon: <UserIcon /> },
+  { to: '/home', label: '홈', icon: <HomeIcon /> },
+  { to: '/events', label: '행사', icon: <CalendarIcon /> },
+  { to: '/payments', label: '납부', icon: <WalletIcon /> },
+  { to: '/mypage', label: '마이', icon: <UserIcon /> },
 ]
 
 export function AppShell() {
@@ -21,6 +22,7 @@ export function AppShell() {
 
   return (
     <div className="app-shell">
+      <MemberScrollReset />
       <header className="topbar">
         <NavLink className="brand" to="/home" aria-label="D Club 홈">
           <span className="brand__mark">D:</span>
@@ -42,7 +44,7 @@ export function AppShell() {
 
       <nav className="bottom-nav" aria-label="주요 메뉴">
         {navItems.map((item) => {
-          const isActive = location.pathname === item.to.split('#')[0] && location.hash === item.hash
+          const isActive = location.pathname === item.to || location.pathname.startsWith(item.to + '/')
           return (
             <Link key={item.label} to={item.to} className={isActive ? 'active' : undefined} aria-current={isActive ? 'page' : undefined}>
               {item.icon}

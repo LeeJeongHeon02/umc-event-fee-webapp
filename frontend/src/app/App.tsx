@@ -6,7 +6,9 @@ import { AdminEventParticipantsPage } from '../pages/AdminEventParticipantsPage'
 import { AdminFeePaymentsPage } from '../pages/AdminFeePaymentsPage'
 import { AdminEventsPage } from '../pages/AdminEventsPage'
 import { EventDetailPage } from '../pages/EventDetailPage'
-import { HomePage } from '../pages/HomePage'
+import { HomeEntry } from './MemberNavigation'
+import { EventsPage } from '../pages/EventsPage'
+import { PaymentsPage } from '../pages/PaymentsPage'
 import { LoginPage } from '../pages/LoginPage'
 import { OnboardingPage } from '../pages/OnboardingPage'
 import { PaymentPage } from '../pages/PaymentPage'
@@ -33,7 +35,9 @@ export function App() {
       </Route>
       <Route element={<MemberGate />}>
         <Route element={<AppShell />}>
-          <Route path="/home" element={<HomePage />} />
+          <Route path="/home" element={<HomeEntry />} />
+          <Route path="/events" element={<EventsPage />} />
+          <Route path="/payments" element={<PaymentsPage />} />
           <Route path="/events/:eventId" element={<EventDetailPage />} />
           <Route path="/payments/:paymentId" element={<PaymentPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />

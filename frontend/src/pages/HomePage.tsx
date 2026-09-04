@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { Link } from 'react-router-dom'
 import { ErrorState, LoadingState } from '../components/AsyncState'
 import { EventCard } from '../components/EventCard'
 import { PaymentCard } from '../components/PaymentCard'
@@ -19,6 +20,8 @@ export function HomePage() {
   const me = meQuery.data!
   const events = eventsQuery.data!.items
   const payments = paymentsQuery.data!.items
+  const upcomingEvents = events.filter((event) => Date.parse(event.endsAt ?? event.startsAt) >= Date.now())
+    .sort((a, b) => Date.parse(a.startsAt) - Date.parse(b.startsAt))
   const actionablePayments = payments.filter((payment) => ['UNPAID', 'REJECTED', 'REPORTED'].includes(payment.status))
   const joinedEventCount = events.filter((event) => event.myParticipationStatus === 'JOINED').length
   const reportedPaymentCount = payments.filter((payment) => payment.status === 'REPORTED').length
@@ -43,11 +46,11 @@ export function HomePage() {
       <section className="page-section" id="events">
         <div className="section-heading">
           <div><span className="eyebrow">일정</span><h2>다가오는 행사</h2></div>
-          <span className="section-meta">{events.length}건</span>
+          <Link className="section-meta" to="/events">전체보기</Link>
         </div>
-        {events.length > 0 ? (
+        {upcomingEvents.length > 0 ? (
           <div className="stack-list">
-            {events.map((event) => <EventCard key={event.id} event={event} />)}
+            {upcomingEvents.slice(0, 3).map((event) => <EventCard key={event.id} event={event} />)}
           </div>
         ) : (
           <div className="home-empty"><strong>예정된 행사가 없어요.</strong><span>새 행사가 등록되면 여기에서 알려드릴게요.</span></div>
@@ -55,31 +58,31 @@ export function HomePage() {
       </section>
 
       <section className="home-overview" aria-label="내 활동 요약">
-        <a href="#events" className="overview-item overview-item--events">
+        <Link to="/events?participation=JOINED" className="overview-item overview-item--events">
           <span className="overview-item__label">참여 중인 행사</span>
           <strong>{joinedEventCount}<small>건</small></strong>
           <span className="overview-item__hint">일정 확인</span>
-        </a>
-        <a href="#payments" className="overview-item">
+        </Link>
+        <Link to="/payments?status=REPORTED" className="overview-item">
           <span className="overview-item__label">입금 확인 대기</span>
           <strong>{reportedPaymentCount}<small>건</small></strong>
           <span className="overview-item__hint">처리 중</span>
-        </a>
-        <a href="#payments" className={`overview-item${unpaidPaymentCount > 0 ? ' overview-item--attention' : ''}`}>
+        </Link>
+        <Link to="/payments?status=NEEDS_PAYMENT" className={`overview-item${unpaidPaymentCount > 0 ? ' overview-item--attention' : ''}`}>
           <span className="overview-item__label">납부 필요</span>
           <strong>{unpaidPaymentCount}<small>건</small></strong>
           <span className="overview-item__hint">내역 확인</span>
-        </a>
+        </Link>
       </section>
 
       <section className="page-section" id="payments">
         <div className="section-heading">
           <div><span className="eyebrow">납부</span><h2>확인이 필요한 내역</h2></div>
-          <span className="section-meta">{actionablePayments.length}건</span>
+          <Link className="section-meta" to="/payments">전체보기</Link>
         </div>
         {actionablePayments.length > 0 ? (
           <div className="stack-list">
-            {actionablePayments.map((payment) => <PaymentCard key={payment.id} payment={payment} />)}
+            {actionablePayments.slice(0, 3).map((payment) => <PaymentCard key={payment.id} payment={payment} />)}
           </div>
         ) : (
           <div className="home-empty"><strong>확인이 필요한 납부가 없어요.</strong><span>새 회비나 참가비가 생기면 여기에서 알려드릴게요.</span></div>

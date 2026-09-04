@@ -37,8 +37,8 @@ export function MyPage() {
     </section>
     <section className="my-links" aria-label="내 활동 메뉴">
       {active ? <>
-        <Link to="/home#events">행사 확인하기<span aria-hidden="true">↗</span></Link>
-        <Link to="/home#payments">내 납부 내역<span aria-hidden="true">↗</span></Link>
+        <Link to="/events">행사 확인하기<span aria-hidden="true">↗</span></Link>
+        <Link to="/payments">내 납부 내역<span aria-hidden="true">↗</span></Link>
         {me.role !== 'MEMBER' && <Link to="/admin">운영진 센터<span aria-hidden="true">↗</span></Link>}
       </> : !me.onboardingCompleted ? <Link to="/onboarding">프로필 설정하기<span aria-hidden="true">→</span></Link>
         : <p>{me.status === 'PENDING' ? '운영진 승인 후 행사와 납부 메뉴를 사용할 수 있어요.' : '이용 상태는 운영진에게 문의해 주세요.'}</p>}

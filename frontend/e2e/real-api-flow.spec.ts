@@ -1,5 +1,43 @@
 import { expect, test } from '@playwright/test'
 
+test('모바일에서 홈·행사·납부를 이동하고 필터·이전 주소를 유지한다', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/home')
+  await expect(page.getByRole('heading', { name: /안녕하세요/ })).toBeVisible()
+  await page.screenshot({ path: testInfo.outputPath('home-mobile.png'), fullPage: true })
+  const menu = page.getByRole('navigation', { name: '주요 메뉴' })
+  await menu.getByRole('link', { name: '행사', exact: true }).click()
+  await expect(page).toHaveURL(/\/events$/)
+  await expect(page.getByRole('heading', { name: '행사', exact: true })).toBeVisible()
+  await expect(page.getByRole('heading', { name: /안녕하세요/ })).toHaveCount(0)
+  await page.getByLabel('참여 상태').selectOption('JOINED')
+  await expect(page).toHaveURL(/participation=JOINED/)
+  await page.screenshot({ path: testInfo.outputPath('events-mobile.png'), fullPage: true })
+  await page.locator('a[href="/events/42"]').click()
+  await expect(menu.getByRole('link', { name: '행사', exact: true })).toHaveAttribute('aria-current', 'page')
+  await page.goBack()
+  await expect(page.getByLabel('참여 상태')).toHaveValue('JOINED')
+  await menu.getByRole('link', { name: '납부', exact: true }).click()
+  await expect(page.getByRole('heading', { name: '납부 내역', exact: true })).toBeVisible()
+  await page.getByLabel('납부 구분').selectOption('MEMBERSHIP_DUE')
+  await page.getByLabel('납부 상태').selectOption('REPORTED')
+  await page.reload()
+  await expect(page.getByLabel('납부 구분')).toHaveValue('MEMBERSHIP_DUE')
+  await expect(page.getByLabel('납부 상태')).toHaveValue('REPORTED')
+  await page.screenshot({ path: testInfo.outputPath('payments-mobile.png'), fullPage: true })
+  for (const width of [390, 320]) {
+    await page.setViewportSize({ width, height: 844 })
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
+  }
+  await page.goto('/home#events')
+  await expect(page).toHaveURL(/\/events$/)
+  await page.goto('/home#payments')
+  await expect(page).toHaveURL(/\/payments$/)
+  await page.setViewportSize({ width: 1280, height: 900 })
+  await expect(menu.getByRole('link', { name: '납부', exact: true })).toHaveAttribute('aria-current', 'page')
+  await page.screenshot({ path: testInfo.outputPath('payments-desktop.png'), fullPage: true })
+})
+
 test('실제 Spring API로 송금 신고·승인·참가 취소와 행사 생성을 처리한다', async ({ page }) => {
   await page.goto('/home')
   await expect(page.getByText('PE(Web) 김총무')).toBeVisible()

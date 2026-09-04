@@ -66,7 +66,7 @@ export function PaymentPage() {
 
   return (
     <div className="page payment-page">
-      <Link className="back-link" to="/home">← 홈으로</Link>
+      <Link className="back-link" to="/payments">← 납부 내역</Link>
       <header className="payment-heading">
         <div><span className="eyebrow">PAYMENT</span><StatusBadge status={payment.status} /></div>
         <h1>{payment.source.title}</h1>
