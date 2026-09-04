@@ -21,6 +21,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/local/register": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 로컬 계정 회원가입
+         * @description 아이디와 전화번호는 중복될 수 없으며 비밀번호는 BCrypt 해시로만 저장한다.
+         */
+        post: operations["registerLocalMember"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/local/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 로컬 계정 로그인
+         * @description 로그인에 성공하면 카카오 로그인과 같은 서버 세션을 생성하고 다음 화면 경로를 반환한다.
+         */
+        post: operations["loginLocalMember"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/me": {
         parameters: {
             query?: never;
@@ -614,6 +654,36 @@ export interface components {
             parameterName: string;
             token: string;
         };
+        LocalRegisterRequest: {
+            /** @example dclub.member */
+            loginId: string;
+            /**
+             * Format: password
+             * @example clubpass123!
+             */
+            password: string;
+            /** @example 010-1234-5678 */
+            phoneNumber: string;
+        };
+        LocalRegisterResponse: {
+            /** Format: int64 */
+            memberId: number;
+            loginId: string;
+        };
+        LocalLoginRequest: {
+            /** @example dclub.member */
+            loginId: string;
+            /**
+             * Format: password
+             * @example clubpass123!
+             */
+            password: string;
+        };
+        LocalLoginResponse: {
+            member: components["schemas"]["MeResponse"];
+            /** @enum {string} */
+            redirectPath: "/onboarding" | "/pending" | "/home";
+        };
         /** @enum {string} */
         MemberPart: "PLAN" | "DESIGN" | "PE_WEB" | "PE_MOBILE";
         /** @enum {string} */
@@ -633,7 +703,8 @@ export interface components {
         MeResponse: {
             /** Format: int64 */
             id: number;
-            kakaoProfileName: string;
+            kakaoProfileName?: string;
+            loginId?: string;
             name?: string;
             part?: components["schemas"]["MemberPart"];
             displayNickname?: string;
@@ -1006,10 +1077,11 @@ export interface components {
         AdminMemberResponse: {
             /** Format: int64 */
             id: number;
-            kakaoProfileName: string;
+            kakaoProfileName?: string;
+            loginId?: string;
             name?: string;
             part?: components["schemas"]["MemberPart"];
-            displayNickname: string;
+            displayNickname?: string;
             role: components["schemas"]["MemberRole"];
             status: components["schemas"]["MemberStatus"];
             onboardingCompleted: boolean;
@@ -1128,7 +1200,7 @@ export interface components {
                 "application/problem+json": components["schemas"]["Problem"];
             };
         };
-        /** @description 카카오 로그인 세션 없음 또는 만료 (`AUTHENTICATION_REQUIRED`) */
+        /** @description 로그인 세션 없음·만료 또는 로컬 계정 정보 불일치 (`AUTHENTICATION_REQUIRED`, `INVALID_CREDENTIALS`) */
         Unauthorized: {
             headers: {
                 [name: string]: unknown;
@@ -1216,6 +1288,58 @@ export interface operations {
                     "application/json": components["schemas"]["CsrfResponse"];
                 };
             };
+        };
+    };
+    registerLocalMember: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LocalRegisterRequest"];
+            };
+        };
+        responses: {
+            /** @description 가입된 로컬 계정 */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LocalRegisterResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            409: components["responses"]["Conflict"];
+        };
+    };
+    loginLocalMember: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LocalLoginRequest"];
+            };
+        };
+        responses: {
+            /** @description 로그인한 회원과 다음 화면 경로 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LocalLoginResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
         };
     };
     getMe: {

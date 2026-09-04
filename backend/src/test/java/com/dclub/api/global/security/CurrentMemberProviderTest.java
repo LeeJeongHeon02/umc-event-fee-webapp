@@ -1,5 +1,6 @@
 package com.dclub.api.global.security;
 
+import com.dclub.api.auth.infrastructure.MemberSessionPrincipal;
 import com.dclub.api.global.common.ApiException;
 import com.dclub.api.member.domain.Member;
 import com.dclub.api.member.domain.MemberPart;
@@ -76,6 +77,22 @@ class CurrentMemberProviderTest {
         when(repository.findById(7L)).thenReturn(Optional.of(member));
 
         var provider = new CurrentMemberProvider(repository, 1, false, false, request);
+
+        assertThat(provider.current()).isSameAs(member);
+        verifyNoInteractions(request);
+    }
+
+    @Test
+    void 로컬_로그인_세션의_memberId로_회원을_찾는다() {
+        var repository = mock(MemberRepository.class);
+        var request = mock(HttpServletRequest.class);
+        var member = Member.pendingLocalMember("local.member", "encoded", "01012345678", Instant.EPOCH);
+        var principal = new MemberSessionPrincipal(9L);
+        SecurityContextHolder.getContext().setAuthentication(
+                UsernamePasswordAuthenticationToken.authenticated(principal, null, List.of()));
+        when(repository.findById(9L)).thenReturn(Optional.of(member));
+
+        var provider = new CurrentMemberProvider(repository, 1, true, true, request);
 
         assertThat(provider.current()).isSameAs(member);
         verifyNoInteractions(request);

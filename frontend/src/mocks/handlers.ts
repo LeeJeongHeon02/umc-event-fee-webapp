@@ -89,6 +89,21 @@ function problem(status: number, code: string, detail: string) {
 }
 
 export const handlers = [
+  http.post(/\/api\/v1\/auth\/local\/register$/, async ({ request }) => {
+    const body = (await request.json()) as { loginId: string }
+    return HttpResponse.json({ memberId: 81, loginId: body.loginId }, { status: 201 })
+  }),
+  http.post(/\/api\/v1\/auth\/local\/login$/, async ({ request }) => {
+    const body = (await request.json()) as { loginId: string }
+    currentMember = {
+      id: 81,
+      loginId: body.loginId,
+      role: 'MEMBER',
+      status: 'PENDING',
+      onboardingCompleted: false,
+    }
+    return HttpResponse.json({ member: currentMember, redirectPath: '/onboarding' })
+  }),
   http.get(/\/api\/v1\/me$/, () => HttpResponse.json(currentMember)),
   http.get(/\/api\/v1\/notifications$/, () => HttpResponse.json({ items: [], unreadCount: 0 })),
   http.post(/\/api\/v1\/notifications\/read-all$/, () => new HttpResponse(null, { status: 204 })),

@@ -9,10 +9,16 @@ import java.time.Instant;
 public class Member {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Column(name = "kakao_id", nullable = false, unique = true)
+    @Column(name = "kakao_id", unique = true)
     private String kakaoId;
-    @Column(name = "kakao_profile_name", nullable = false)
+    @Column(name = "kakao_profile_name")
     private String kakaoProfileName;
+    @Column(name = "login_id", unique = true, length = 30)
+    private String loginId;
+    @Column(name = "password_hash", length = 100)
+    private String passwordHash;
+    @Column(name = "phone_number", unique = true, length = 20)
+    private String phoneNumber;
     private String name;
     @Enumerated(EnumType.STRING)
     private MemberPart part;
@@ -33,10 +39,14 @@ public class Member {
 
     protected Member() {}
 
-    private Member(String kakaoId, String kakaoProfileName, String name, MemberPart part,
+    private Member(String kakaoId, String kakaoProfileName, String loginId, String passwordHash,
+                   String phoneNumber, String name, MemberPart part,
                    MemberRole role, MemberStatus status, boolean onboardingCompleted, Instant now) {
         this.kakaoId = kakaoId;
         this.kakaoProfileName = kakaoProfileName;
+        this.loginId = loginId;
+        this.passwordHash = passwordHash;
+        this.phoneNumber = phoneNumber;
         this.name = name;
         this.part = part;
         this.role = role;
@@ -48,19 +58,28 @@ public class Member {
     }
 
     public static Member activeStaff(String kakaoId, String profileName, String name, MemberPart part, Instant now) {
-        return new Member(kakaoId, profileName, name, part, MemberRole.STAFF, MemberStatus.ACTIVE, true, now);
+        return new Member(kakaoId, profileName, null, null, null, name, part,
+                MemberRole.STAFF, MemberStatus.ACTIVE, true, now);
     }
 
     public static Member activeMember(String kakaoId, String profileName, String name, MemberPart part, Instant now) {
-        return new Member(kakaoId, profileName, name, part, MemberRole.MEMBER, MemberStatus.ACTIVE, true, now);
+        return new Member(kakaoId, profileName, null, null, null, name, part,
+                MemberRole.MEMBER, MemberStatus.ACTIVE, true, now);
     }
 
     public static Member pendingKakaoMember(String kakaoId, String profileName, Instant now) {
-        return new Member(kakaoId, profileName, null, null, MemberRole.MEMBER, MemberStatus.PENDING, false, now);
+        return new Member(kakaoId, profileName, null, null, null, null, null,
+                MemberRole.MEMBER, MemberStatus.PENDING, false, now);
+    }
+
+    public static Member pendingLocalMember(String loginId, String passwordHash, String phoneNumber, Instant now) {
+        return new Member(null, null, loginId, passwordHash, phoneNumber, null, null,
+                MemberRole.MEMBER, MemberStatus.PENDING, false, now);
     }
 
     public static Member bootstrapAdmin(String kakaoId, String profileName, Instant now) {
-        return new Member(kakaoId, profileName, null, null, MemberRole.ADMIN, MemberStatus.PENDING, false, now);
+        return new Member(kakaoId, profileName, null, null, null, null, null,
+                MemberRole.ADMIN, MemberStatus.PENDING, false, now);
     }
 
     public void completeOnboarding(String name, MemberPart part, Instant now) {
@@ -136,6 +155,9 @@ public class Member {
     public Long getId() { return id; }
     public String getKakaoId() { return kakaoId; }
     public String getKakaoProfileName() { return kakaoProfileName; }
+    public String getLoginId() { return loginId; }
+    public String getPasswordHash() { return passwordHash; }
+    public String getPhoneNumber() { return phoneNumber; }
     public String getName() { return name; }
     public MemberPart getPart() { return part; }
     public MemberRole getRole() { return role; }

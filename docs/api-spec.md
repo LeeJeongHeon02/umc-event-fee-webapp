@@ -42,10 +42,10 @@ GET /api/v1/login/oauth2/code/kakao
 
 ### 1.3 인증 방식
 
-- 카카오 OAuth Authorization Code 흐름을 Spring 서버가 처리한다.
+- 카카오 OAuth Authorization Code 흐름과 로컬 아이디·비밀번호 검증을 Spring 서버가 처리한다.
 - 로그인 성공 후 서버 세션을 생성하고 세션 쿠키를 발급한다.
 - 세션 쿠키는 `HttpOnly`, `Secure`, 적절한 `SameSite` 속성을 사용한다.
-- 프론트엔드는 카카오 액세스 토큰이나 서비스 인증 토큰을 `localStorage`에 저장하지 않는다.
+- 로컬 비밀번호는 BCrypt 해시로만 저장하며 프론트엔드는 인증 토큰을 `localStorage`에 저장하지 않는다.
 - 로그인 성공 시 서버는 토큰을 URL에 넣지 않고 프론트엔드의 고정 성공 경로로 리다이렉트한다.
 
 권장 성공·실패 리다이렉트:
@@ -228,6 +228,18 @@ GET /oauth2/authorization/kakao
 - 프론트 동작: 브라우저 전체 페이지 이동 사용
 
 ### 3.2 현재 사용자 조회
+
+로컬 계정은 다음 API를 먼저 사용한다.
+
+```http
+POST /api/v1/auth/local/register
+POST /api/v1/auth/local/login
+```
+
+- 회원가입 요청: `loginId`, `password`, `phoneNumber`
+- 로그인 성공 응답: `member`, `redirectPath`
+- 신규 계정의 `redirectPath`는 `/onboarding`
+- 아이디 또는 전화번호 중복은 `409`, 잘못된 로그인 정보는 `401 INVALID_CREDENTIALS`
 
 ```http
 GET /api/v1/me

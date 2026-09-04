@@ -189,7 +189,8 @@ public class AdminApplicationService {
     }
 
     private AdminMemberResponse memberResponse(Member member) {
-        return new AdminMemberResponse(member.getId(), member.getKakaoProfileName(), member.getName(), member.getPart(),
+        return new AdminMemberResponse(member.getId(), member.getKakaoProfileName(), member.getLoginId(),
+                member.getName(), member.getPart(),
                 member.displayNickname(), member.getRole(), member.getStatus(), member.isOnboardingCompleted(),
                 member.getApprovedAt(), member.getCreatedAt(), member.getUpdatedAt(), member.getVersion());
     }

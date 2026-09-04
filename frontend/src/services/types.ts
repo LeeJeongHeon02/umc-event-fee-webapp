@@ -1,6 +1,10 @@
 import type { components } from './schema'
 
 export type MeResponse = components['schemas']['MeResponse']
+export type LocalRegisterRequest = components['schemas']['LocalRegisterRequest']
+export type LocalRegisterResponse = components['schemas']['LocalRegisterResponse']
+export type LocalLoginRequest = components['schemas']['LocalLoginRequest']
+export type LocalLoginResponse = components['schemas']['LocalLoginResponse']
 export type MemberPart = components['schemas']['MemberPart']
 export type EventListItem = components['schemas']['EventListItem']
 export type EventPage = components['schemas']['EventPage']

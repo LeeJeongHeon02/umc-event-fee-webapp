@@ -33,4 +33,16 @@ class MemberTest {
         assertThat(member.getRole()).isEqualTo(MemberRole.ADMIN);
         assertThat(member.getStatus()).isEqualTo(MemberStatus.ACTIVE);
     }
+
+    @Test
+    void 로컬_회원은_인증정보를_보관하고_온보딩_대기로_시작한다() {
+        Member member = Member.pendingLocalMember("local.member", "$2a$encoded", "01012345678", now);
+
+        assertThat(member.getKakaoId()).isNull();
+        assertThat(member.getLoginId()).isEqualTo("local.member");
+        assertThat(member.getPasswordHash()).isEqualTo("$2a$encoded");
+        assertThat(member.getPhoneNumber()).isEqualTo("01012345678");
+        assertThat(member.isOnboardingCompleted()).isFalse();
+        assertThat(member.getStatus()).isEqualTo(MemberStatus.PENDING);
+    }
 }

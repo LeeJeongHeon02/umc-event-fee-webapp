@@ -29,6 +29,8 @@ public class DemoDataInitializer implements ApplicationRunner {
             (4, 'dev-member-4', '서준', '박서준', 'PE_MOBILE', 'MEMBER', 'ACTIVE', true, current_timestamp, current_timestamp, current_timestamp, 0),
             (5, 'dev-member-5', '유진', '최유진', 'PE_WEB', 'MEMBER', 'ACTIVE', true, current_timestamp, current_timestamp, current_timestamp, 0)
             """);
+        // Explicit demo IDs do not advance H2/PostgreSQL identity counters automatically.
+        jdbc.execute("alter table members alter column id restart with 6");
 
         jdbc.update("""
             insert into payment_settings (bank_name, account_number, account_holder, kakao_pay_receive_url, active, created_by, created_at)

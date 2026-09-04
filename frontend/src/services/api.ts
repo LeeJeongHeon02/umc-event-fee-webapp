@@ -23,6 +23,10 @@ import type {
   EventDetail,
   EventPage,
   JoinEventResponse,
+  LocalLoginRequest,
+  LocalLoginResponse,
+  LocalRegisterRequest,
+  LocalRegisterResponse,
   MeResponse,
   MemberPart,
   PaymentDetail,
@@ -71,6 +75,18 @@ function throwApiError(error: unknown, response: Response): never {
 
 export async function getMe(): Promise<MeResponse> {
   const { data, error, response } = await client.GET('/me')
+  if (!data) throwApiError(error, response)
+  return data
+}
+
+export async function registerLocalMember(input: LocalRegisterRequest): Promise<LocalRegisterResponse> {
+  const { data, error, response } = await client.POST('/auth/local/register', { body: input })
+  if (!data) throwApiError(error, response)
+  return data
+}
+
+export async function loginLocalMember(input: LocalLoginRequest): Promise<LocalLoginResponse> {
+  const { data, error, response } = await client.POST('/auth/local/login', { body: input })
   if (!data) throwApiError(error, response)
   return data
 }

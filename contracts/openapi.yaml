@@ -8,6 +8,7 @@ servers:
 security:
   - cookieAuth: []
 tags:
+  - name: Auth
   - name: Me
   - name: Events
   - name: Payments
@@ -16,6 +17,7 @@ paths:
   /auth/csrf:
     get:
       tags: [Auth]
+      security: []
       operationId: getCsrfToken
       summary: 상태 변경 요청용 CSRF 토큰 발급
       responses:
@@ -25,6 +27,54 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CsrfResponse'
+  /auth/local/register:
+    post:
+      tags: [Auth]
+      security: []
+      operationId: registerLocalMember
+      summary: 로컬 계정 회원가입
+      description: 아이디와 전화번호는 중복될 수 없으며 비밀번호는 BCrypt 해시로만 저장한다.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LocalRegisterRequest'
+      responses:
+        '201':
+          description: 가입된 로컬 계정
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocalRegisterResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /auth/local/login:
+    post:
+      tags: [Auth]
+      security: []
+      operationId: loginLocalMember
+      summary: 로컬 계정 로그인
+      description: 로그인에 성공하면 카카오 로그인과 같은 서버 세션을 생성하고 다음 화면 경로를 반환한다.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LocalLoginRequest'
+      responses:
+        '200':
+          description: 로그인한 회원과 다음 화면 경로
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocalLoginResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
   /me:
     get:
       tags: [Me]
@@ -760,7 +810,7 @@ components:
     cookieAuth:
       type: apiKey
       in: cookie
-      name: SESSION
+      name: JSESSIONID
   parameters:
     EventId:
       name: eventId
@@ -839,7 +889,7 @@ components:
                   - field: name
                     reason: 공백일 수 없습니다
     Unauthorized:
-      description: 카카오 로그인 세션 없음 또는 만료 (`AUTHENTICATION_REQUIRED`)
+      description: 로그인 세션 없음·만료 또는 로컬 계정 정보 불일치 (`AUTHENTICATION_REQUIRED`, `INVALID_CREDENTIALS`)
       content:
         application/problem+json:
           schema:
@@ -851,7 +901,7 @@ components:
                 title: Unauthorized
                 status: 401
                 code: AUTHENTICATION_REQUIRED
-                detail: 카카오 로그인이 필요하거나 로그인 세션이 만료되었습니다.
+                detail: 로그인이 필요하거나 로그인 세션이 만료되었습니다.
                 instance: /api/v1/me
                 timestamp: '2026-09-03T09:30:00Z'
                 fieldErrors: []
@@ -896,6 +946,53 @@ components:
           type: string
         token:
           type: string
+    LocalRegisterRequest:
+      type: object
+      required: [loginId, password, phoneNumber]
+      properties:
+        loginId:
+          type: string
+          pattern: '^[a-z0-9._-]{4,30}$'
+          example: dclub.member
+        password:
+          type: string
+          format: password
+          minLength: 8
+          maxLength: 72
+          example: clubpass123!
+        phoneNumber:
+          type: string
+          pattern: '^01[016789]-?[0-9]{3,4}-?[0-9]{4}$'
+          example: 010-1234-5678
+    LocalRegisterResponse:
+      type: object
+      required: [memberId, loginId]
+      properties:
+        memberId:
+          type: integer
+          format: int64
+        loginId:
+          type: string
+    LocalLoginRequest:
+      type: object
+      required: [loginId, password]
+      properties:
+        loginId:
+          type: string
+          example: dclub.member
+        password:
+          type: string
+          format: password
+          example: clubpass123!
+    LocalLoginResponse:
+      type: object
+      required: [member, redirectPath]
+      properties:
+        member:
+          $ref: '#/components/schemas/MeResponse'
+        redirectPath:
+          type: string
+          enum: [/onboarding, /pending, /home]
     MemberPart:
       type: string
       enum: [PLAN, DESIGN, PE_WEB, PE_MOBILE]
@@ -922,12 +1019,14 @@ components:
       enum: [BANK_TRANSFER, KAKAO_PAY_CODE]
     MeResponse:
       type: object
-      required: [id, kakaoProfileName, role, status, onboardingCompleted]
+      required: [id, role, status, onboardingCompleted]
       properties:
         id:
           type: integer
           format: int64
         kakaoProfileName:
+          type: string
+        loginId:
           type: string
         name:
           type: string
@@ -1630,12 +1729,14 @@ components:
           format: date-time
     AdminMemberResponse:
       type: object
-      required: [id, kakaoProfileName, displayNickname, role, status, onboardingCompleted, createdAt, updatedAt, version]
+      required: [id, role, status, onboardingCompleted, createdAt, updatedAt, version]
       properties:
         id:
           type: integer
           format: int64
         kakaoProfileName:
+          type: string
+        loginId:
           type: string
         name:
           type: string

@@ -1,5 +1,6 @@
 package com.dclub.api.global.security;
 
+import com.dclub.api.auth.infrastructure.MemberSessionPrincipal;
 import com.dclub.api.global.common.ApiException;
 import com.dclub.api.member.domain.Member;
 import com.dclub.api.member.domain.MemberRole;
@@ -33,20 +34,31 @@ public class CurrentMemberProvider {
     }
 
     public Member current() {
+        Long authenticatedMemberId = authenticatedMemberId();
+        if (authenticatedMemberId != null) {
+            return memberRepository.findById(authenticatedMemberId)
+                    .orElseThrow(() -> ApiException.notFound("로그인 회원을 찾을 수 없습니다."));
+        }
         if (developmentAuthenticationEnabled) {
             return memberRepository.findById(resolveDevelopmentMemberId())
                     .orElseThrow(() -> ApiException.notFound("개발용 로그인 회원을 찾을 수 없습니다."));
         }
 
+        throw new ApiException(HttpStatus.UNAUTHORIZED, "AUTHENTICATION_REQUIRED", "로그인이 필요합니다.");
+    }
+
+    private Long authenticatedMemberId() {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.getPrincipal() instanceof MemberSessionPrincipal principal) {
+            return principal.memberId();
+        }
         if (authentication != null && authentication.getPrincipal() instanceof OAuth2User oauthUser) {
             Object memberId = oauthUser.getAttribute("memberId");
             if (memberId instanceof Number number) {
-                return memberRepository.findById(number.longValue())
-                        .orElseThrow(() -> ApiException.notFound("로그인 회원을 찾을 수 없습니다."));
+                return number.longValue();
             }
         }
-        throw new ApiException(HttpStatus.UNAUTHORIZED, "AUTHENTICATION_REQUIRED", "카카오 로그인이 필요합니다.");
+        return null;
     }
 
     private long resolveDevelopmentMemberId() {

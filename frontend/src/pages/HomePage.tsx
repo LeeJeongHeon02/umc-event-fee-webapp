@@ -40,6 +40,20 @@ export function HomePage() {
         </time>
       </section>
 
+      <section className="page-section" id="events">
+        <div className="section-heading">
+          <div><span className="eyebrow">일정</span><h2>다가오는 행사</h2></div>
+          <span className="section-meta">{events.length}건</span>
+        </div>
+        {events.length > 0 ? (
+          <div className="stack-list">
+            {events.map((event) => <EventCard key={event.id} event={event} />)}
+          </div>
+        ) : (
+          <div className="home-empty"><strong>예정된 행사가 없어요.</strong><span>새 행사가 등록되면 여기에서 알려드릴게요.</span></div>
+        )}
+      </section>
+
       <section className="home-overview" aria-label="내 활동 요약">
         <a href="#events" className="overview-item overview-item--events">
           <span className="overview-item__label">참여 중인 행사</span>
@@ -72,19 +86,6 @@ export function HomePage() {
         )}
       </section>
 
-      <section className="page-section" id="events">
-        <div className="section-heading">
-          <div><span className="eyebrow">일정</span><h2>다가오는 행사</h2></div>
-          <span className="section-meta">{events.length}건</span>
-        </div>
-        {events.length > 0 ? (
-          <div className="stack-list">
-            {events.map((event) => <EventCard key={event.id} event={event} />)}
-          </div>
-        ) : (
-          <div className="home-empty"><strong>예정된 행사가 없어요.</strong><span>새 행사가 등록되면 여기에서 알려드릴게요.</span></div>
-        )}
-      </section>
     </div>
   )
 }

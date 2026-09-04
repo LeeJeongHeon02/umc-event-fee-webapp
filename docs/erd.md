@@ -21,8 +21,11 @@
 erDiagram
     MEMBERS {
         BIGINT id PK
-        VARCHAR kakao_user_id UK
+        VARCHAR kakao_id UK
         VARCHAR kakao_profile_name
+        VARCHAR login_id UK
+        VARCHAR password_hash
+        VARCHAR phone_number UK
         VARCHAR name
         VARCHAR part
         VARCHAR role
@@ -205,13 +208,16 @@ flowchart LR
 
 ### 4.1 `members`
 
-카카오 로그인을 통해 생성된 동아리원 계정이다.
+카카오 OAuth 또는 로컬 회원가입으로 생성된 동아리원 계정이다.
 
 | 컬럼 | PostgreSQL 타입 | Null | 제약/기본값 | 설명 |
 |---|---|---:|---|---|
 | `id` | `BIGINT` | N | PK, Identity | 내부 회원 ID |
-| `kakao_user_id` | `VARCHAR(100)` | N | UNIQUE | 카카오 사용자 고유 ID |
+| `kakao_id` | `VARCHAR(100)` | Y | UNIQUE | 카카오 사용자 고유 ID, 로컬 계정은 `null` |
 | `kakao_profile_name` | `VARCHAR(100)` | Y |  | 마지막으로 받은 카카오 프로필 닉네임 |
+| `login_id` | `VARCHAR(30)` | Y | UNIQUE | 로컬 로그인 아이디, 카카오 계정은 `null` |
+| `password_hash` | `VARCHAR(100)` | Y |  | BCrypt 비밀번호 해시, 카카오 계정은 `null` |
+| `phone_number` | `VARCHAR(20)` | Y | UNIQUE | 하이픈을 제거한 로컬 회원 전화번호 |
 | `name` | `VARCHAR(50)` | Y |  | 사용자가 확정한 이름, 온보딩 전에는 `null` 가능 |
 | `part` | `VARCHAR(20)` | Y | CHECK | 파트, 온보딩 전에는 `null` 가능 |
 | `role` | `VARCHAR(20)` | N | `MEMBER` | 권한 역할 |
@@ -456,7 +462,9 @@ stateDiagram-v2
 
 ```sql
 ALTER TABLE members
-  ADD CONSTRAINT uk_members_kakao_user_id UNIQUE (kakao_user_id);
+  ADD CONSTRAINT uk_members_kakao_id UNIQUE (kakao_id),
+  ADD CONSTRAINT uk_members_login_id UNIQUE (login_id),
+  ADD CONSTRAINT uk_members_phone_number UNIQUE (phone_number);
 
 ALTER TABLE event_participations
   ADD CONSTRAINT uk_event_participation UNIQUE (event_id, member_id);

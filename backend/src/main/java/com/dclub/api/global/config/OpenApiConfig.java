@@ -37,9 +37,9 @@ public class OpenApiConfig {
                         .title("동아리 행사·회비 관리 API")
                         .version("v1")
                         .description("""
-                                카카오 로그인 세션 기반의 행사 참가, 회비·참가비 신고, 운영진 정산 API입니다.
+                                카카오 OAuth 또는 로컬 계정 로그인 세션 기반의 행사 참가, 회비·참가비 신고, 운영진 정산 API입니다.
 
-                                **Swagger에서 상태 변경 요청을 시험하려면** 같은 브라우저에서 카카오 로그인한 뒤
+                                **Swagger에서 상태 변경 요청을 시험하려면** 같은 브라우저에서 로그인한 뒤
                                 `GET /auth/csrf`를 먼저 호출해 CSRF 토큰 쿠키를 발급받으세요.
                                 이후 Swagger UI는 `XSRF-TOKEN` 쿠키를 `X-XSRF-TOKEN` 헤더로 전송합니다.
 
@@ -61,7 +61,7 @@ public class OpenApiConfig {
                 .components(apiComponents())
                 .addSecurityItem(new SecurityRequirement().addList(SESSION_AUTH))
                 .tags(List.of(
-                        new Tag().name("Authentication").description("카카오 OAuth 세션과 CSRF 토큰"),
+                        new Tag().name("Authentication").description("카카오 OAuth·로컬 계정 로그인과 CSRF 토큰"),
                         new Tag().name("My profile").description("내 회원 정보와 온보딩"),
                         new Tag().name("Events").description("동아리원 행사 조회·참가·취소"),
                         new Tag().name("Payments").description("내 행사비·회비 조회와 송금 신고"),
@@ -99,8 +99,9 @@ public class OpenApiConfig {
         operation.setTags(List.of(doc.tag()));
         operation.setSummary(doc.summary());
         operation.setDescription(doc.description());
+        if (key.contains(" /auth/")) operation.setSecurity(List.of());
         response(operation, doc.successCode(), doc.successDescription());
-        response(operation, "401", "`AUTHENTICATION_REQUIRED`: 카카오 로그인 세션이 없거나 만료되었습니다.");
+        response(operation, "401", "`AUTHENTICATION_REQUIRED`: 로그인 세션이 없거나 만료되었습니다. 로컬 로그인은 `INVALID_CREDENTIALS`도 반환할 수 있습니다.");
         response(operation, "403", "`FORBIDDEN`: 권한이 없거나 `CSRF_TOKEN_INVALID`: 보안 토큰이 없거나 만료되었습니다.");
         for (String errorCode : doc.errorCodes()) {
             response(operation, errorCode, errorDescription(errorCode));
@@ -131,7 +132,7 @@ public class OpenApiConfig {
                         .type(SecurityScheme.Type.APIKEY)
                         .in(SecurityScheme.In.COOKIE)
                         .name("JSESSIONID")
-                        .description("카카오 로그인 완료 후 브라우저에 자동 저장되는 서버 세션 쿠키입니다. 직접 입력하지 않습니다."));
+                        .description("카카오 또는 로컬 로그인 완료 후 브라우저에 자동 저장되는 서버 세션 쿠키입니다. 직접 입력하지 않습니다."));
         // ModelConverters uses the Java class name by default. Publish an explicit "Problem" alias so that
         // every error response has a stable schema reference even if the implementation class is renamed.
         registerProblemSchemas(components);
@@ -233,8 +234,12 @@ public class OpenApiConfig {
         Map<String, EndpointDoc> docs = new LinkedHashMap<>();
         add(docs, "GET", "/auth/csrf", "getCsrfToken", "Authentication", "CSRF 토큰 조회",
                 "로그인 세션의 상태 변경 요청에 사용할 CSRF 토큰과 헤더 이름을 반환합니다. Swagger에서 POST·PATCH·DELETE 호출 전 먼저 실행하세요.", "200", "CSRF 토큰과 헤더·파라미터 이름을 반환합니다.");
+        add(docs, "POST", "/auth/local/register", "registerLocalMember", "Authentication", "로컬 계정 회원가입",
+                "영문 소문자 기반 아이디, 8~72자 비밀번호, 전화번호로 계정을 생성합니다. 비밀번호는 BCrypt 해시만 저장하며 가입 직후에는 로그인되지 않습니다.", "201", "생성된 회원 ID와 로그인 아이디를 반환합니다.", "400", "409");
+        add(docs, "POST", "/auth/local/login", "loginLocalMember", "Authentication", "로컬 계정 로그인",
+                "아이디와 비밀번호를 검증해 서버 세션을 생성합니다. 신규 회원은 `/onboarding`, 온보딩 후 승인 대기는 `/pending`, 활성 회원은 `/home` 경로를 반환합니다.", "200", "현재 회원 정보와 다음 화면 경로를 반환합니다.", "400");
         add(docs, "GET", "/me", "getMyProfile", "My profile", "내 회원 정보 조회",
-                "카카오 로그인에 연결된 회원의 역할, 승인 상태, 파트와 최종 닉네임을 반환합니다.", "200", "현재 회원 정보를 반환합니다.");
+                "로그인한 회원의 역할, 승인 상태, 파트와 최종 닉네임을 반환합니다.", "200", "현재 회원 정보를 반환합니다.");
         add(docs, "PATCH", "/me/onboarding", "completeOnboarding", "My profile", "온보딩 완료",
                 "이름과 파트를 저장합니다. 최종 닉네임은 서버가 `파트명 + 이름`으로 생성합니다.", "200", "갱신된 회원 정보를 반환합니다.", "400", "409");
         add(docs, "PATCH", "/me/profile", "updateMyProfile", "My profile", "내 프로필 수정",

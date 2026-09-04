@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
@@ -24,6 +24,7 @@ type FormValues = z.infer<typeof schema>
 
 export function OnboardingPage() {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const meQuery = useCurrentMember()
   const {
     register,
@@ -43,7 +44,10 @@ export function OnboardingPage() {
   const selectedLabel = parts.find((part) => part.value === selectedPart)?.label ?? ''
   const mutation = useMutation({
     mutationFn: completeOnboarding,
-    onSuccess: () => navigate('/pending'),
+    onSuccess: (member) => {
+      queryClient.setQueryData(['me'], member)
+      navigate(member.status === 'ACTIVE' ? '/home' : '/pending')
+    },
   })
 
   return (
@@ -56,7 +60,9 @@ export function OnboardingPage() {
         <div className="auth-copy">
           <span className="eyebrow">WELCOME TO D:CLUB</span>
           <h1>어떤 파트에서<br />함께하고 있나요?</h1>
-          <p>카카오 프로필 이름을 불러왔어요. 동아리에서 사용하는 이름으로 바꿀 수 있습니다.</p>
+          <p>{meQuery.data?.kakaoProfileName
+            ? '카카오 프로필 이름을 불러왔어요. 동아리에서 사용하는 이름으로 바꿀 수 있습니다.'
+            : '동아리에서 사용할 이름과 활동 파트를 알려주세요.'}</p>
         </div>
 
         <form className="onboarding-form" onSubmit={handleSubmit((values) => mutation.mutate(values))}>

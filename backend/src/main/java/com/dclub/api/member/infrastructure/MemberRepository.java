@@ -9,6 +9,9 @@ import java.util.List;
 
 public interface MemberRepository extends JpaRepository<Member, Long> {
     Optional<Member> findByKakaoId(String kakaoId);
+    Optional<Member> findByLoginId(String loginId);
+    boolean existsByLoginId(String loginId);
+    boolean existsByPhoneNumber(String phoneNumber);
     List<Member> findAllByOrderByCreatedAtDesc();
     List<Member> findAllByStatusOrderByCreatedAtAsc(MemberStatus status);
     long countByStatus(MemberStatus status);

@@ -3,11 +3,18 @@ package com.dclub.api.global.security;
 import org.springframework.context.annotation.*;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 public class SecurityConfig {
+    @Bean
+    PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
     @Bean
     @Profile({"dev", "test", "postgres"})
     SecurityFilterChain developmentSecurity(HttpSecurity http) throws Exception {
@@ -31,6 +38,7 @@ public class SecurityConfig {
                         .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler()))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/actuator/health", "/oauth2/**", "/login/**",
+                                "/auth/csrf", "/auth/local/**",
                                 "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .anyRequest().authenticated())
                 // API callers always receive the documented Problem JSON instead of an HTML login redirect.

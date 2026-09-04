@@ -22,7 +22,8 @@ public class ApiMapper {
     }
 
     public MeResponse member(Member member) {
-        return new MeResponse(member.getId(), member.getKakaoProfileName(), member.getName(), member.getPart(),
+        return new MeResponse(member.getId(), member.getKakaoProfileName(), member.getLoginId(),
+                member.getName(), member.getPart(),
                 member.displayNickname(), member.getRole(), member.getStatus(),
                 member.isOnboardingCompleted(), member.getApprovedAt());
     }

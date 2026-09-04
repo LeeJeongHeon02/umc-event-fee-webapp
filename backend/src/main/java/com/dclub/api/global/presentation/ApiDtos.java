@@ -11,9 +11,22 @@ import java.util.List;
 public final class ApiDtos {
     private ApiDtos() {}
 
-    public record MeResponse(Long id, String kakaoProfileName, String name, MemberPart part,
+    public record MeResponse(Long id, String kakaoProfileName, String loginId, String name, MemberPart part,
                              String displayNickname, MemberRole role, MemberStatus status,
                              boolean onboardingCompleted, Instant approvedAt) {}
+
+    public record LocalRegisterRequest(
+            @NotBlank @Pattern(regexp = "^[a-z0-9._-]{4,30}$",
+                    message = "아이디는 영문 소문자, 숫자, 마침표, 밑줄, 하이픈으로 4~30자여야 합니다.") String loginId,
+            @NotBlank @Size(min = 8, max = 72) String password,
+            @NotBlank @Pattern(regexp = "^01[016789]-?[0-9]{3,4}-?[0-9]{4}$",
+                    message = "휴대전화 번호 형식을 확인해 주세요.") String phoneNumber) {}
+
+    public record LocalRegisterResponse(Long memberId, String loginId) {}
+
+    public record LocalLoginRequest(@NotBlank String loginId, @NotBlank String password) {}
+
+    public record LocalLoginResponse(MeResponse member, String redirectPath) {}
 
     public record OnboardingRequest(@NotBlank @Size(max = 50) String name, @NotNull MemberPart part) {}
 
@@ -171,7 +184,7 @@ public final class ApiDtos {
 
     public record AdminPaymentReviewResponse(Long paymentId, PaymentStatus status, long version, Instant reviewedAt) {}
 
-    public record AdminMemberResponse(Long id, String kakaoProfileName, String name, MemberPart part,
+    public record AdminMemberResponse(Long id, String kakaoProfileName, String loginId, String name, MemberPart part,
                                       String displayNickname, MemberRole role, MemberStatus status,
                                       boolean onboardingCompleted, Instant approvedAt, Instant createdAt,
                                       Instant updatedAt, long version) {}

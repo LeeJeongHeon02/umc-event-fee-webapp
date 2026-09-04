@@ -36,7 +36,7 @@ public class ApiSecurityExceptionHandler implements AuthenticationEntryPoint, Ac
         write(response, problemFactory.create(
                 HttpStatus.UNAUTHORIZED,
                 "AUTHENTICATION_REQUIRED",
-                "카카오 로그인이 필요하거나 로그인 세션이 만료되었습니다.",
+                "로그인이 필요하거나 로그인 세션이 만료되었습니다.",
                 request,
                 List.of()));
     }
