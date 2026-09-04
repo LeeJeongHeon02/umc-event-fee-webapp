@@ -27,9 +27,12 @@ git fetch --prune origin "$TARGET_BRANCH"
 git switch "$TARGET_BRANCH"
 git pull --ff-only origin "$TARGET_BRANCH"
 
-# 1 GB 인스턴스에서도 빌드 중 메모리 사용량이 급증하지 않도록 순차 빌드한다.
-COMPOSE_PARALLEL_LIMIT=1 \
-  docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up -d --build
+# BuildKit/Bake may build multiple images concurrently even with COMPOSE_PARALLEL_LIMIT=1.
+# Use separate commands so the frontend and Gradle never compile at the same time.
+# Keep existing services running until BOTH images have built successfully.
+docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" build backend
+docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" build frontend
+docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up -d --no-build
 
 echo "Waiting for containers to enter the running state..."
 for attempt in {1..12}; do

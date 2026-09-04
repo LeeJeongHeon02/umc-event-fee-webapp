@@ -107,9 +107,11 @@ jobs:
             '
               set -e
               cd /home/ubuntu/umc-event-fee-webapp
-              # 최초 한 번은 이 커밋의 deploy 스크립트 자체를 먼저 받는다.
-              if [ ! -f deploy/deploy.sh ]; then
-                git pull --ff-only origin dev
+              # Fetch the updated deployment script before executing it; never overwrite server edits.
+              if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
+                echo "Deployment aborted: the server working tree has tracked changes." >&2
+                exit 1
               fi
+              git pull --ff-only origin dev
               bash deploy/deploy.sh
             '
