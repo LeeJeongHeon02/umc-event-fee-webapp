@@ -24,6 +24,7 @@ compose.yaml            로컬 PostgreSQL
 - [운영 배포 가이드](./docs/deployment-guide.md)
 - [OpenAPI 계약](./contracts/openapi.yaml)
 - [실행 중인 Swagger/OpenAPI 사용 가이드](./docs/swagger-guide.md)
+- [행사 안내 Markdown 작성·보안 정책](./docs/event-markdown.md)
 
 ## 구현된 화면과 흐름
 
@@ -37,6 +38,7 @@ compose.yaml            로컬 PostgreSQL
 - 사용자 송금 완료 신고와 `미납 → 확인 대기` 전환
 - 운영진 대시보드와 전체 수납률 요약
 - 운영진 행사 초안 생성·수정·삭제·공개
+- 행사 안내 Markdown 작성·미리보기·서식 버튼, 부원용 서식 표시와 모바일 표 스크롤
 - 운영진 행사 종료·취소와 환불 대기 전환
 - 회원 승인·정지·역할 변경
 - 회비 차수 생성·공개와 활성 회원 일괄 부과

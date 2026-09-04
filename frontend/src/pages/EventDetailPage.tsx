@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ErrorState, LoadingState } from '../components/AsyncState'
 import { StatusBadge } from '../components/StatusBadge'
+import { MarkdownContent } from '../components/MarkdownContent'
 import { cancelEventParticipation, getEvent, joinEvent } from '../services/api'
 import { formatDateTime, formatWon } from '../services/format'
 
@@ -63,7 +64,7 @@ export function EventDetailPage() {
       <section className="content-section">
         <span className="eyebrow">ABOUT</span>
         <h2>행사 안내</h2>
-        <p>{event.description}</p>
+        <MarkdownContent>{event.description}</MarkdownContent>
       </section>
 
       <section className="deadline-callout">

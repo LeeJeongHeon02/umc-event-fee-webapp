@@ -75,6 +75,59 @@ test('실제 Spring API로 송금 신고·승인·참가 취소와 행사 생성
   await expect(page.getByText('공개').last()).toBeVisible()
 })
 
+test('Markdown 초안을 저장·수정·공개하고 모바일 행사 안내에서 확인한다', async ({ page }, testInfo) => {
+  const markdown = [
+    '## 모임 준비 안내', '', '**노트북**을 준비해 주세요.', '충전기도 필요합니다.', '',
+    '- 학생회관에서 만나요.', '',
+    '| 시간 | 내용 | 장소 | 준비물 |', '| --- | --- | --- | --- |', '| 18:00 | 개발 모임 | 학생회관 | 노트북 |', '',
+    '[안내 사이트](https://example.com)', '',
+    '```text', 'a'.repeat(150), '```', '',
+    '<script>window.markdownExecuted = true</script>', '',
+    '[위험 링크](javascript:alert%281%29)', '', '![추적](https://example.com/tracker.png)',
+  ].join('\n')
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/admin/events')
+  await page.getByRole('textbox', { name: '행사명' }).fill('Markdown E2E 행사')
+  await page.getByRole('textbox', { name: '상세 내용' }).fill(markdown)
+  await page.getByRole('button', { name: '미리보기' }).click()
+  await expect(page.getByRole('heading', { name: '모임 준비 안내' })).toBeVisible()
+  for (const width of [390, 320]) {
+    await page.setViewportSize({ width, height: 844 })
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
+  }
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.screenshot({ path: testInfo.outputPath('markdown-admin-mobile.png'), fullPage: true })
+  const created = page.waitForResponse((response) => response.url().endsWith('/api/v1/admin/events') && response.request().method() === 'POST')
+  await page.getByRole('button', { name: '초안 저장' }).click()
+  const response = await created
+  expect(response.ok()).toBe(true)
+  const event = await response.json()
+  expect(event.description).toBe(markdown)
+  await page.reload()
+  await page.getByRole('button').filter({ has: page.getByText('Markdown E2E 행사', { exact: true }) }).click()
+  await expect(page.getByRole('textbox', { name: '상세 내용' })).toHaveValue(markdown)
+  const updatedMarkdown = markdown + '\n\n**수정한 공지**'
+  await page.getByRole('textbox', { name: '상세 내용' }).fill(updatedMarkdown)
+  const updated = page.waitForResponse((response) => response.url().endsWith(`/api/v1/admin/events/${event.id}`) && response.request().method() === 'PATCH')
+  await page.getByRole('button', { name: '초안 저장' }).click()
+  expect((await updated).ok()).toBe(true)
+  await page.getByRole('button', { name: '행사 공개' }).click()
+  await expect(page.getByText('동아리원에게 행사를 공개했습니다.')).toBeVisible()
+  await page.goto(`/events/${event.id}`)
+  await page.reload()
+  await expect(page.getByRole('heading', { name: '모임 준비 안내' })).toBeVisible()
+  await expect(page.locator('.markdown-content strong').filter({ hasText: '수정한 공지' })).toBeVisible()
+  await expect(page.getByRole('table')).toContainText('학생회관')
+  await expect(page.getByRole('link', { name: '안내 사이트' })).toHaveAttribute('rel', 'noopener noreferrer')
+  await expect(page.getByRole('link', { name: '위험 링크' })).toHaveCount(0)
+  await expect(page.locator('.markdown-content script, .markdown-content img')).toHaveCount(0)
+  for (const width of [390, 320, 1280]) {
+    await page.setViewportSize({ width, height: 844 })
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
+    await page.screenshot({ path: testInfo.outputPath(`markdown-member-${width}.png`), fullPage: true })
+  }
+})
+
 test('로컬 회원가입·온보딩 후 모바일 마이페이지에서 로그아웃하고 재로그인한다', async ({ page }, testInfo) => {
   await page.goto('/login')
   await page.getByRole('button', { name: '회원가입 화면 열기' }).click()

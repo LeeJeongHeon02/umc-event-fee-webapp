@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
 import { ErrorState, LoadingState } from '../components/AsyncState'
 import { StatusBadge } from '../components/StatusBadge'
+import { MarkdownEditor } from '../components/MarkdownEditor'
 import {
   cancelAdminEvent,
   closeAdminEvent,
@@ -180,7 +181,7 @@ export function AdminEventsPage() {
           <div className="admin-panel-heading"><div><span className="eyebrow">{selected ? 'EDIT EVENT' : 'NEW EVENT'}</span><h2>{selected ? selected.title : '새 행사 초안'}</h2></div>{selected && <StatusBadge status={selected.status} />}</div>
           <label>행사명<input required maxLength={200} value={form.title} onChange={(e) => updateField('title', e.target.value)} disabled={!isDraft} /></label>
           <label>한 줄 소개<input maxLength={500} value={form.summary} onChange={(e) => updateField('summary', e.target.value)} disabled={!isDraft} /></label>
-          <label>상세 내용<textarea required rows={5} value={form.description} onChange={(e) => updateField('description', e.target.value)} disabled={!isDraft} /></label>
+          <MarkdownEditor key={selected?.id ?? 'new'} value={form.description} onChange={(value) => updateField('description', value)} disabled={!isDraft} />
           <label>장소<input maxLength={200} value={form.location} onChange={(e) => updateField('location', e.target.value)} disabled={!isDraft} /></label>
           <div className="event-form-grid">
             <label>시작 일시<input required type="datetime-local" value={form.startsAt} onChange={(e) => updateField('startsAt', e.target.value)} disabled={!isDraft} /></label>
