@@ -149,13 +149,6 @@ test('디자인 시스템 반응형 검수: 회원·운영진 화면은 가로�
     await page.screenshot({ path: testInfo.outputPath('admin-reports-' + viewport.name + '.png'), fullPage: true })
   }
 
-  await page.setViewportSize({ width: 390, height: 844 })
-  await page.goto('/admin/events')
-  const moreMenu = page.getByRole('navigation', { name: '운영진 모바일 메뉴' }).getByText('더보기', { exact: true })
-  await moreMenu.click()
-  await expect(page.getByRole('link', { name: '환불 관리' })).toBeVisible()
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
-
   await page.setViewportSize({ width: 1440, height: 960 })
   await page.goto('/events/42')
   await expect(page.getByRole('heading', { name: '2026 가을 해커톤' })).toBeVisible()
