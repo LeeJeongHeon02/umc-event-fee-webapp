@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { AdminReviewActions } from '../components/AdminReviewActions'
 import { ErrorState, LoadingState } from '../components/AsyncState'
+import { FilterBar } from '../components/FilterBar'
 import { StatusBadge } from '../components/StatusBadge'
 import { getAdminEventParticipants } from '../services/api'
 import { formatDateTime, formatWon } from '../services/format'
@@ -49,23 +50,23 @@ export function AdminEventParticipantsPage() {
       <section className="admin-list-panel">
         <div className="admin-toolbar">
           <div><span className="eyebrow">MEMBERS</span><h2>참가 부원 {items.length}명</h2></div>
-          <div className="admin-filters">
+          <FilterBar>
             <label><span className="sr-only">부원 검색</span><input className="text-input" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="이름 또는 파트 검색" /></label>
             <label><span className="sr-only">납부 상태</span><select className="select-input" value={status} onChange={(event) => setStatus(event.target.value as typeof status)}><option value="ALL">전체 상태</option><option value="REPORTED">확인 대기</option><option value="UNPAID">미납</option><option value="CONFIRMED">납부 완료</option><option value="REJECTED">반려</option></select></label>
-          </div>
+          </FilterBar>
         </div>
         <div className="admin-table-wrap">
-          <table className="admin-table">
+          <table className="admin-table admin-table--payment-list">
             <thead><tr><th>참가 부원</th><th>신청일</th><th>입금자명</th><th>참가비</th><th>상태</th><th>관리</th></tr></thead>
             <tbody>
               {filteredItems.map((item) => (
                 <tr key={item.participationId}>
-                  <td><div className="member-cell"><span>{item.name.slice(0, 1)}</span><div><strong>{item.nickname}</strong><small>{item.part.replace('_', ' ')}</small></div></div></td>
-                  <td>{formatDateTime(item.joinedAt)}</td>
-                  <td>{item.latestReport?.senderName ?? '—'}</td>
-                  <td>{formatWon(item.amount)}</td>
-                  <td><StatusBadge status={item.paymentStatus} /></td>
-                  <td>{item.paymentStatus === 'REPORTED' && item.paymentId ? <AdminReviewActions memberName={item.name} paymentId={item.paymentId} version={item.version} /> : <span className="table-muted">처리 없음</span>}</td>
+                  <td data-label="참가 부원"><div className="member-cell"><span>{item.name.slice(0, 1)}</span><div><strong>{item.nickname}</strong><small>{item.part.replace('_', ' ')}</small></div></div></td>
+                  <td data-label="신청일">{formatDateTime(item.joinedAt)}</td>
+                  <td data-label="입금자명">{item.latestReport?.senderName ?? '—'}</td>
+                  <td data-label="참가비">{formatWon(item.amount)}</td>
+                  <td data-label="상태"><StatusBadge status={item.paymentStatus} /></td>
+                  <td data-label="관리">{item.paymentStatus === 'REPORTED' && item.paymentId ? <AdminReviewActions memberName={item.name} paymentId={item.paymentId} version={item.version} /> : <span className="table-muted">처리 없음</span>}</td>
                 </tr>
               ))}
             </tbody>
@@ -76,4 +77,3 @@ export function AdminEventParticipantsPage() {
     </div>
   )
 }
-

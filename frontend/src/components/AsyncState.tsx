@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 export function LoadingState({ label = '불러오는 중' }: { label?: string }) {
   return (
     <div className="state-box" role="status" aria-live="polite">
-      <span className="spinner" aria-hidden="true" />
+      <div className="state-skeleton" aria-hidden="true"><span /><span /><span /></div>
       <p>{label}</p>
     </div>
   )
@@ -27,4 +27,3 @@ export function ErrorState({
     </div>
   )
 }
-

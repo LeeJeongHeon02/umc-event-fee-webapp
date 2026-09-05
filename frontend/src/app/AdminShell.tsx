@@ -10,6 +10,9 @@ const adminNavItems = [
   { to: '/admin/refunds', label: '환불 관리', symbol: '↺' },
 ]
 
+const mobilePrimaryNavItems = adminNavItems.slice(0, 4)
+const mobileMoreNavItems = adminNavItems.slice(4)
+
 export function AdminShell() {
   const meQuery = useCurrentMember()
   const memberName = meQuery.data?.name ?? meQuery.data?.kakaoProfileName ?? '운영진'
@@ -21,13 +24,28 @@ export function AdminShell() {
           <span>D:</span>
           <div><strong>Club</strong><small>운영진 센터</small></div>
         </NavLink>
-        <nav className="admin-nav" aria-label="운영진 메뉴">
+        <nav className="admin-nav admin-nav--desktop" aria-label="운영진 메뉴">
           {adminNavItems.filter((item) => !item.adminOnly || meQuery.data?.role === 'ADMIN').map((item) => (
             <NavLink key={item.to} to={item.to} end={item.end}>
               <span aria-hidden="true">{item.symbol}</span>
               {item.label}
             </NavLink>
           ))}
+        </nav>
+        <nav className="admin-mobile-nav" aria-label="운영진 모바일 메뉴">
+          {mobilePrimaryNavItems.map((item) => (
+            <NavLink key={item.to} to={item.to} end={item.end}>
+              <span aria-hidden="true">{item.symbol}</span>{item.label}
+            </NavLink>
+          ))}
+          <details className="admin-mobile-nav__more">
+            <summary><span aria-hidden="true">⋯</span>더보기</summary>
+            <div>
+              {mobileMoreNavItems.filter((item) => !item.adminOnly || meQuery.data?.role === 'ADMIN').map((item) => (
+                <NavLink key={item.to} to={item.to}><span aria-hidden="true">{item.symbol}</span>{item.label}</NavLink>
+              ))}
+            </div>
+          </details>
         </nav>
         <NavLink className="member-mode-link" to="/home">← 동아리원 화면</NavLink>
       </aside>

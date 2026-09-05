@@ -14,6 +14,7 @@ describe('AdminFeePaymentsPage', () => {
     expect(within(memberRow).getByText('확인 대기')).toBeInTheDocument()
 
     await user.click(within(memberRow).getByRole('button', { name: '홍길동 납부 승인' }))
+    await user.click(screen.getByRole('button', { name: '승인하기' }))
 
     await waitFor(() => {
       const updatedRow = screen.getByText('PE(Web) 홍길동').closest('tr')!

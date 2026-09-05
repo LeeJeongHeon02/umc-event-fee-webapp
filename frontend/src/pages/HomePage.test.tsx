@@ -30,7 +30,7 @@ describe('HomePage', () => {
         { ...eventFixtures[0], id: 200, title: '지난 행사', startsAt: '2020-01-01T00:00:00Z', endsAt: '2020-01-01T01:00:00Z' },
       ] })),
       http.get(/\/api\/v1\/me\/payment-obligations$/, () => HttpResponse.json({ items:
-        Array.from({ length: 5 }, (_, i) => ({ ...paymentFixture, id: 100 + i, source: { ...paymentFixture.source, title: '납부 ' + i } })),
+        Array.from({ length: 5 }, (_, i) => ({ ...paymentFixture, id: 100 + i, status: 'REPORTED', source: { ...paymentFixture.source, title: '납부 ' + i } })),
       })),
     )
     renderWithProviders(<HomePage />, ['/home'])
@@ -38,5 +38,16 @@ describe('HomePage', () => {
     expect(screen.getAllByRole('link').filter((link) => link.getAttribute('href')?.match(/^\/events\/\d+$/))).toHaveLength(3)
     expect(screen.getAllByRole('link').filter((link) => link.getAttribute('href')?.match(/^\/payments\/\d+$/))).toHaveLength(3)
     expect(screen.queryByText('지난 행사')).not.toBeInTheDocument()
+  })
+
+  it('미납 또는 반려 납부는 보조 지표보다 먼저 행동 카드로 안내한다', async () => {
+    renderWithProviders(<HomePage />, ['/home'])
+
+    const priorityTitle = await screen.findByRole('heading', { name: /납부를 확인해 주세요/ })
+    const overview = screen.getByLabelText('내 활동 요약')
+    expect(priorityTitle.closest('section')!.compareDocumentPosition(overview) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(screen.getByRole('link', { name: '납부 내역 보기' })).toHaveAttribute('href', '/payments?status=NEEDS_PAYMENT')
+    expect(screen.getByRole('link', { name: /참여 중인 행사/ })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /입금 확인 대기/ })).toBeInTheDocument()
   })
 })

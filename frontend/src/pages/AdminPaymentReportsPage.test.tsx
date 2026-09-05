@@ -34,9 +34,11 @@ describe('AdminPaymentReportsPage', () => {
     const row = screen.getAllByRole('row').find((item) => within(item).queryByRole('button', { name: /납부 승인/ }))!
     const name = within(row).getByRole('button', { name: /납부 승인/ }).getAttribute('aria-label')!
     await user.click(within(row).getByRole('button', { name }))
+    await user.click(screen.getByRole('button', { name: '승인하기' }))
     await waitFor(() => expect(row).not.toBeInTheDocument())
     const secondRow = screen.getAllByRole('row').find((item) => within(item).queryByRole('button', { name: /납부 반려/ }))!
     await user.click(within(secondRow).getByRole('button', { name: /납부 반려/ }))
+    await user.click(screen.getByRole('button', { name: '반려하기' }))
     await waitFor(() => expect(secondRow).not.toBeInTheDocument())
   })
 

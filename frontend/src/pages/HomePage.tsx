@@ -22,10 +22,10 @@ export function HomePage() {
   const payments = paymentsQuery.data!.items
   const upcomingEvents = events.filter((event) => Date.parse(event.endsAt ?? event.startsAt) >= Date.now())
     .sort((a, b) => Date.parse(a.startsAt) - Date.parse(b.startsAt))
-  const actionablePayments = payments.filter((payment) => ['UNPAID', 'REJECTED', 'REPORTED'].includes(payment.status))
+  const priorityPayments = payments.filter((payment) => ['UNPAID', 'REJECTED'].includes(payment.status))
+  const reportedPayments = payments.filter((payment) => payment.status === 'REPORTED')
   const joinedEventCount = events.filter((event) => event.myParticipationStatus === 'JOINED').length
   const reportedPaymentCount = payments.filter((payment) => payment.status === 'REPORTED').length
-  const unpaidPaymentCount = payments.filter((payment) => ['UNPAID', 'REJECTED'].includes(payment.status)).length
   const today = new Date()
   const todayLabel = today.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' })
 
@@ -42,6 +42,17 @@ export function HomePage() {
           <strong>{todayLabel}</strong>
         </time>
       </section>
+
+      {priorityPayments.length > 0 && (
+        <section className="home-priority" aria-labelledby="priority-payment-title">
+          <div>
+            <span className="eyebrow">납부 필요</span>
+            <h2 id="priority-payment-title">{priorityPayments.length}건의 납부를 확인해 주세요.</h2>
+            <p>{priorityPayments[0].source.title} 외 {priorityPayments.length - 1}건이 납부 또는 재확인을 기다리고 있어요.</p>
+          </div>
+          <Link className="brand-button" to="/payments?status=NEEDS_PAYMENT">납부 내역 보기</Link>
+        </section>
+      )}
 
       <section className="page-section" id="events">
         <div className="section-heading">
@@ -68,11 +79,6 @@ export function HomePage() {
           <strong>{reportedPaymentCount}<small>건</small></strong>
           <span className="overview-item__hint">처리 중</span>
         </Link>
-        <Link to="/payments?status=NEEDS_PAYMENT" className={`overview-item${unpaidPaymentCount > 0 ? ' overview-item--attention' : ''}`}>
-          <span className="overview-item__label">납부 필요</span>
-          <strong>{unpaidPaymentCount}<small>건</small></strong>
-          <span className="overview-item__hint">내역 확인</span>
-        </Link>
       </section>
 
       <section className="page-section" id="payments">
@@ -80,12 +86,12 @@ export function HomePage() {
           <div><span className="eyebrow">납부</span><h2>확인이 필요한 내역</h2></div>
           <Link className="section-meta" to="/payments">전체보기</Link>
         </div>
-        {actionablePayments.length > 0 ? (
+        {reportedPayments.length > 0 ? (
           <div className="stack-list">
-            {actionablePayments.slice(0, 3).map((payment) => <PaymentCard key={payment.id} payment={payment} />)}
+            {reportedPayments.slice(0, 3).map((payment) => <PaymentCard key={payment.id} payment={payment} />)}
           </div>
         ) : (
-          <div className="home-empty"><strong>확인이 필요한 납부가 없어요.</strong><span>새 회비나 참가비가 생기면 여기에서 알려드릴게요.</span></div>
+          <div className="home-empty"><strong>확인 대기 중인 납부가 없어요.</strong><span>송금 신고를 하면 여기에서 진행 상태를 알려드릴게요.</span></div>
         )}
       </section>
 

@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
 import { ErrorState, LoadingState } from '../components/AsyncState'
+import { ConfirmActionDialog } from '../components/ConfirmActionDialog'
 import { StatusBadge } from '../components/StatusBadge'
 import { MarkdownEditor } from '../components/MarkdownEditor'
 import {
@@ -85,6 +86,7 @@ export function AdminEventsPage() {
   const [form, setForm] = useState<EventForm>(emptyForm)
   const [message, setMessage] = useState('')
   const [confirmingDelete, setConfirmingDelete] = useState(false)
+  const [confirmingCancellation, setConfirmingCancellation] = useState(false)
 
   const saveMutation = useMutation({
     mutationFn: () => selected
@@ -126,6 +128,7 @@ export function AdminEventsPage() {
   const cancelMutation = useMutation({
     mutationFn: () => cancelAdminEvent(selected!.id, selected!.version, '운영진 행사 취소'),
     onSuccess: async () => {
+      setConfirmingCancellation(false)
       setMessage('행사를 취소하고 납부 항목을 정리했습니다.')
       const refreshed = await queryClient.fetchQuery({ queryKey: ['admin', 'events'], queryFn: getAdminEvents })
       const event = refreshed.find((item) => item.id === selected!.id)
@@ -139,6 +142,7 @@ export function AdminEventsPage() {
     setForm(eventToForm(event))
     setMessage('')
     setConfirmingDelete(false)
+    setConfirmingCancellation(false)
   }
 
   const startNew = () => {
@@ -146,6 +150,7 @@ export function AdminEventsPage() {
     setForm(emptyForm)
     setMessage('')
     setConfirmingDelete(false)
+    setConfirmingCancellation(false)
   }
 
   const updateField = <K extends keyof EventForm>(key: K, value: EventForm[K]) => {
@@ -197,7 +202,7 @@ export function AdminEventsPage() {
             {isDraft && <button className="primary-button" type="submit" disabled={saveMutation.isPending}>{saveMutation.isPending ? '저장 중…' : '초안 저장'}</button>}
             {selected?.status === 'DRAFT' && <button className="secondary-button" type="button" onClick={() => publishMutation.mutate()} disabled={publishMutation.isPending}>행사 공개</button>}
             {selected?.status === 'PUBLISHED' && <button className="secondary-button" type="button" onClick={() => closeMutation.mutate()} disabled={closeMutation.isPending}>행사 종료</button>}
-            {selected && selected.status !== 'CANCELED' && <button className="danger-text-button" type="button" onClick={() => { if (window.confirm('행사를 취소하고 납부 상태를 정리할까요?')) cancelMutation.mutate() }} disabled={cancelMutation.isPending}>행사 취소</button>}
+            {selected && selected.status !== 'CANCELED' && <button className="danger-text-button" type="button" onClick={() => setConfirmingCancellation(true)} disabled={cancelMutation.isPending}>행사 취소</button>}
             {selected?.status === 'DRAFT' && !confirmingDelete && <button className="danger-text-button" type="button" onClick={() => setConfirmingDelete(true)}>초안 삭제</button>}
             {selected?.status === 'DRAFT' && confirmingDelete && (
               <>
@@ -208,6 +213,7 @@ export function AdminEventsPage() {
           </div>
         </form>
       </section>
+      {confirmingCancellation && selected && <ConfirmActionDialog title="행사를 취소할까요?" description={<p><strong>{selected.title}</strong>의 참가 신청과 납부 상태가 취소 또는 환불 대기 상태로 정리됩니다.</p>} confirmLabel="행사 취소" tone="danger" pending={cancelMutation.isPending} onCancel={() => setConfirmingCancellation(false)} onConfirm={() => cancelMutation.mutate()} />}
     </div>
   )
 }

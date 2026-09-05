@@ -55,6 +55,7 @@ test('실제 Spring API로 송금 신고·승인·참가 취소와 행사 생성
   const reportRow = page.getByRole('row').filter({ has: page.getByRole('link', { name: /행사비 · 2026 가을 해커톤/ }) })
     .filter({ has: page.getByRole('button', { name: '김총무 납부 승인' }) })
   await reportRow.getByRole('button', { name: '김총무 납부 승인' }).click()
+  await page.getByRole('button', { name: '승인하기' }).click()
   await expect(reportRow).toHaveCount(0)
   await page.goto('/admin/events/42/participants')
   await expect(page.getByRole('row', { name: /김총무/ })).toContainText('납부 완료')
@@ -162,4 +163,46 @@ test('로컬 회원가입·온보딩 후 모바일 마이페이지에서 로그�
   await page.getByRole('button', { name: '아이디로 로그인' }).click()
   await expect(page.getByRole('heading', { name: /가입 신청이/ })).toBeVisible()
   await expect(page.getByText('Plan 로컬회원')).toBeVisible()
+})
+
+test('디자인 시스템 반응형 검수: 회원·운영진 화면은 가로로 넘치지 않고 CTA와 표가 겹치지 않는다', async ({ page }, testInfo) => {
+  const viewports = [
+    { width: 390, height: 844, name: 'mobile-390' },
+    { width: 768, height: 1024, name: 'tablet-768' },
+    { width: 1440, height: 960, name: 'desktop-1440' },
+  ]
+
+  for (const viewport of viewports) {
+    await page.setViewportSize(viewport)
+    await page.goto('/home')
+    await expect(page.getByRole('heading', { name: /안녕하세요/ })).toBeVisible()
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
+    await page.screenshot({ path: testInfo.outputPath('home-' + viewport.name + '.png'), fullPage: true })
+
+    await page.goto('/admin/payment-reports')
+    await expect(page.getByRole('heading', { name: '송금 신고 확인' })).toBeVisible()
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
+    await page.screenshot({ path: testInfo.outputPath('admin-reports-' + viewport.name + '.png'), fullPage: true })
+  }
+
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/admin/events')
+  const moreMenu = page.getByRole('navigation', { name: '운영진 모바일 메뉴' }).getByText('더보기', { exact: true })
+  await moreMenu.click()
+  await expect(page.getByRole('link', { name: '환불 관리' })).toBeVisible()
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
+
+  await page.setViewportSize({ width: 1440, height: 960 })
+  await page.goto('/events/42')
+  await expect(page.getByRole('heading', { name: '2026 가을 해커톤' })).toBeVisible()
+  const overlaps = await page.locator('.sticky-action').evaluate((cta) => {
+    const target = document.querySelector('.content-section') as HTMLElement | null
+    if (!target) return true
+    const a = cta.getBoundingClientRect()
+    const b = target.getBoundingClientRect()
+    return a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top
+  })
+  expect(overlaps).toBe(false)
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
+  await page.screenshot({ path: testInfo.outputPath('event-detail-desktop-1440.png'), fullPage: true })
 })
